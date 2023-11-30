@@ -1,0 +1,10 @@
+node_modules
+build
+coverage
+.vscode
+.DS_STORE
+.env*
+tmp
+pnpm-lock.yaml
+*.xml
+tfe-dating-node-mac.iml
