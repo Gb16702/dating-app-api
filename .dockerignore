@@ -1,0 +1,8 @@
+node_modules
+build
+
+.gitignore
+.dockerignore
+.env
+.env.test
+.env.example
