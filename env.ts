@@ -12,19 +12,32 @@
 |
 */
 
-import Env from '@ioc:Adonis/Core/Env'
+import Env from "@ioc:Adonis/Core/Env";
 
 export default Env.rules({
-	HOST: Env.schema.string({ format: 'host' }),
-	PORT: Env.schema.number(),
-	APP_KEY: Env.schema.string(),
-	APP_NAME: Env.schema.string(),
+  HOST: Env.schema.string({ format: "host" }),
+  PORT: Env.schema.number(),
+  ADMIN_EMAIL: Env.schema.string(),
+  APP_KEY: Env.schema.string(),
+  APP_NAME: Env.schema.string(),
   DB_CONNECTION: Env.schema.string(),
-  DRIVE_DISK: Env.schema.enum(['local'] as const),
-	NODE_ENV: Env.schema.enum(['development', 'production', 'test'] as const),
-  PG_HOST: Env.schema.string({ format: 'host' }),
+  DRIVE_DISK: Env.schema.enum(["local"] as const),
+  NODE_ENV: Env.schema.enum(["development", "production", "test"] as const),
+  PG_HOST: Env.schema.string({ format: "host" }),
   PG_PORT: Env.schema.number(),
   PG_USER: Env.schema.string(),
   PG_PASSWORD: Env.schema.string.optional(),
   PG_DB_NAME: Env.schema.string(),
-})
+  REDIS_CONNECTION: Env.schema.enum(["local"] as const),
+  REDIS_HOST: Env.schema.string({ format: "host" }),
+  REDIS_PORT: Env.schema.number(),
+  REDIS_PASSWORD: Env.schema.string.optional(),
+  SPOTIFY_CLIENT_ID: Env.schema.string(),
+  SPOTIFY_CLIENT_SECRET: Env.schema.string(),
+  SPOTIFY_REDIRECT_URI: Env.schema.string(),
+  CLOUDINARY_CLOUD_NAME: Env.schema.string(),
+  CLOUDINARY_PUBLIC: Env.schema.string(),
+  CLOUDINARY_SECRET: Env.schema.string(),
+  SENDGRID_API_KEY: Env.schema.string(),
+  FRONTEND_URL: Env.schema.string(),
+});

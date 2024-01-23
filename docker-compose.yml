@@ -4,7 +4,6 @@ services:
     build: .
     volumes:
       - .:/app
-      - /app/node_modules
     ports:
       - 20000:20000
     environment:
@@ -12,11 +11,21 @@ services:
     mem_reservation: 128M
     depends_on:
       - database
+      - redis
   database:
     image: postgres:alpine
     environment:
       - POSTGRES_USER=${PG_USER}
       - POSTGRES_PASSWORD=${PG_PASSWORD}
       - POSTGRES_DB=${PG_DB_NAME}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     ports:
-      - "5432:5432"
+      - "5414:5432"
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:

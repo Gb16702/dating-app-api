@@ -1,8 +1,17 @@
-import {column, BaseModel} from "@ioc:Adonis/Lucid/Orm";
+import { column, BaseModel, belongsTo, BelongsTo } from "@ioc:Adonis/Lucid/Orm";
+import User from "./User";
+import Gender from "./Gender";
+import City from "./City";
 
 export default class UserProfile extends BaseModel {
-  @column({isPrimary: true})
-  public id: string;
+  @column({ isPrimary: true })
+  public id: number;
+
+  @column()
+  public cityId: number;
+
+  @column()
+  public genderId: number;
 
   @column()
   public first_name: string;
@@ -14,12 +23,6 @@ export default class UserProfile extends BaseModel {
   public date_of_birth: Date;
 
   @column()
-  public gender: string;
-
-  @column()
-  public user_preferred_gender: string;
-
-  @column()
   public bio: string;
 
   @column()
@@ -29,5 +32,20 @@ export default class UserProfile extends BaseModel {
   public is_profile_displayed: boolean;
 
   @column()
-  public user_id: number;
+  public userId: string;
+
+  @belongsTo(() => Gender, {
+    foreignKey: "genderId",
+  })
+  public gender: BelongsTo<typeof Gender>;
+
+  @belongsTo(() => User, {
+    foreignKey: "userId",
+  })
+  public user: BelongsTo<typeof User>;
+
+  @belongsTo(() => City, {
+    foreignKey: "cityId",
+  })
+  public city: BelongsTo<typeof City>;
 }

@@ -16,18 +16,26 @@
     "@types/source-map-support": "^0.5.10",
     "adonis-preset-ts": "^2.1.0",
     "pino-pretty": "^10.2.3",
-    "typescript": "~4.6",
+    "typescript": "~4.6.4",
     "youch": "^3.3.3",
     "youch-terminal": "^2.2.3"
   },
   "dependencies": {
-    "@adonisjs/core": "^5.8.0",
+    "@adonisjs/ally": "4.1.5",
+    "@adonisjs/core": "^5.9.0",
     "@adonisjs/lucid": "^18.4.2",
-    "@adonisjs/repl": "^3.1.0",
+    "@adonisjs/redis": "^7.3.4",
+    "@adonisjs/repl": "^3.1.11",
+    "@sendgrid/mail": "^8.1.0",
+    "cloudinary": "^1.41.2",
+    "jsonwebtoken": "^9.0.2",
     "luxon": "^3.4.4",
+    "node-cron": "^3.0.3",
     "pg": "^8.11.3",
+    "phc-argon2": "^1.1.4",
     "proxy-addr": "^2.0.7",
     "reflect-metadata": "^0.1.13",
+    "socket.io": "^4.7.4",
     "source-map-support": "^0.5.21"
   }
 }

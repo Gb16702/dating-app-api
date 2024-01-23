@@ -18,14 +18,109 @@
 |
 */
 
-import Route from '@ioc:Adonis/Core/Route'
+import Route from "@ioc:Adonis/Core/Route";
 
-Route.get('/', async () => {
-  return { hello: 'world' }
-})
+Route.post("/", "WelcomeEmailController.sendWelcomeEmail");
 
 Route.group(() => {
   Route.group(() => {
-    Route.post("/register", "RegistersController.index")
-  }).prefix("/authentication")
+    Route.group(() => {
+      Route.group(() => {
+        Route.patch("/role", "AdminUsersController.editUsersRole");
+      }).prefix("/edit");
+      Route.get("/all", "AdminUsersController.getAll");
+      Route.get("/paginate", "AdminUsersController.getPaginatedUsers");
+      Route.get("/search", "AdminUsersController.searchUsers");
+      Route.get("/:id", "AdminUsersController.get");
+      Route.group(() => {
+        Route.get("/all", "ReportsController.all");
+        Route.get("/:id", "ReportsController.get");
+      }).prefix("/reports");
+    }).prefix("/users");
+    Route.group(() => {
+      Route.get("/all", "AdminCitiesController.all");
+      Route.post("/create", "AdminCitiesController.create");
+      Route.get("/:id", "AdminCitiesController.get");
+      Route.patch("/edit/:id", "AdminCitiesController.edit");
+      Route.delete("/delete/:id", "AdminCitiesController.delete");
+    }).prefix("/cities");
+    Route.group(() => {
+      Route.get("/all", "SupportTicketController.all");
+      Route.patch("/update/:id", "SupportTicketController.update");
+      Route.delete("/delete/:id", "SupportTicketController.delete");
+    }).prefix("/tickets");
+  });
+  Route.group(() => {
+    Route.post("/create", "BanController.create");
+    Route.get("/all", "BanController.all");
+    Route.delete("/delete/:id", "BanController.delete");
+  })
+    .prefix("/ban")
+    .prefix("/admin")
+    .middleware("admin");
+  Route.group(() => {
+    Route.get("/redirect", "SpotifyAuthController.redirect");
+    Route.get("/callback", "SpotifyAuthController.callback");
+    Route.post("/register", "RegistersController.post");
+    Route.post("/login", "AuthController.login");
+    Route.get("/logout", "AuthController.logout").middleware("auth");
+    Route.post("/forgot-password", "AuthController.forgotPassword");
+    Route.post("/reset-forgotten-password", "AuthController.resetForgottenPassword");
+    Route.post("/verify-token", "AuthController.verifyToken");
+    Route.get("/verify-session-token", "AuthController.verifySessionToken").middleware("auth");
+  }).prefix("/authentication");
+  Route.group(() => {
+    Route.get("/me", "UsersController.me").middleware("auth");
+    Route.post("/edit-password", "UsersController.editPassword").middleware("auth");
+    Route.group(() => {
+      Route.post("/setup", "ProfileController.setup");
+      Route.group(() => {
+        Route.get("/all", "UserInterestsController.all");
+        Route.post("/add", "UserInterestsController.addUserInterests");
+        Route.delete("/delete", "UserInterestsController.removeUserInterests");
+      }).prefix("/interests");
+    })
+      .prefix("/profile")
+      .middleware("auth");
+    Route.group(() => {
+      Route.post("/create", "MatchController.create").middleware("auth");
+      Route.delete("/delete/:id", "MatchController.delete").middleware("auth");
+    })
+      .prefix("/matches")
+      .middleware("auth");
+    Route.group(() => {
+      Route.get("/all", "SpotifyDataController.search");
+    })
+      .prefix("/spotify")
+      .middleware("auth");
+    Route.post("/messages", "MessagesController.create").middleware("auth");
+    Route.patch(
+      "/conversations/:id/pin",
+      "UserFavoritesConversationsController.pin"
+    ).middleware("auth");
+    Route.get(
+      "/conversations/:id/messages",
+      "MessagesController.show"
+    ).middleware("auth");
+    Route.group(() => {
+      Route.post("/create", "ReportsController.create");
+      Route.delete("/cancel", "ReportsController.cancel");
+    })
+      .prefix("/reports")
+      .middleware("auth");
+    Route.group(() => {
+      Route.get("/getUserTickets", "SupportTicketController.getUserTickets");
+      Route.post("/create", "SupportTicketController.create");
+      Route.delete("/cancel", "SupportTicketController.cancel");
+    })
+      .prefix("/tickets")
+      .middleware("auth");
+  }).prefix("/users");
+  Route.group(() => {
+    Route.get("/all", "InterestsController.all");
+    Route.post("/create", "InterestsController.create");
+    Route.get("/:id", "InterestsController.get");
+    Route.delete("/delete/:id", "InterestsController.delete");
+    Route.patch("/update/:id", "InterestsController.update");
+  }).prefix("/interests");
 }).prefix("/api");

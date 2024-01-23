@@ -1,0 +1,121 @@
+import type { HttpContextContract } from "@ioc:Adonis/Core/HttpContext";
+import User from "../../Models/User";
+
+export default class AdminController {
+  public async get({ request, response }: HttpContextContract) {
+    const { id } = request.params();
+    try {
+      const user: User | null = await User.query()
+        .preload("profile")
+        .where("id", id)
+        .firstOrFail();
+
+      return response.ok({
+        user,
+      });
+    } catch (_) {
+      return response.notFound({ message: "User not found" });
+    }
+  }
+
+  public async getAll({ response }: HttpContextContract) {
+    const users: User[] = await User.query().preload("profile");
+
+    return response.ok({
+      users,
+    });
+  }
+
+  public async getPaginatedUsers({ request, response }: HttpContextContract) {
+    const { page, limit } = request.qs();
+
+    page || 1;
+    limit || 10;
+
+    const users: User[] = await User.query()
+      .preload("profile")
+      .paginate(page, limit);
+
+    return response.ok({
+      users,
+    });
+  }
+
+  public async searchUsers({ request, response }: HttpContextContract) {
+    const { query } = request.qs();
+    if(!query) {
+      return response.badRequest({ message: "Bad request"});
+    }
+
+    try {
+      const users: User[] = await User.query()
+      .preload("profile")
+      .where("email", "LIKE", `%${query}%`)
+      .orWhereHas("profile", q => {
+        q.where("first_name", "LIKE", `%${query}%`)
+        .orWhere("last_name", "LIKE", `%${query}%`)
+      })
+      .limit(10);
+
+      return response.ok({
+        users,
+      })
+    }
+    catch(_) {
+      return response.badRequest({ message: "Bad request"});
+    }
+  }
+
+  public async editUsersRole({ request, response }: HttpContextContract) {
+    const { users } = request.body();
+
+    if (!users || !users.length) {
+      return response.badRequest({ message: "Bad request" });
+    }
+
+    const ids: string[] = users.map((user: User) => user);
+
+    let error: boolean = false;
+
+    try {
+      for (const id of ids) {
+        const user: User | null = await User.findBy("id", id);
+        if (!user || user.email === process.env?.ADMIN_EMAIL) {
+          error = true;
+          continue;
+        }
+
+        user.is_admin = !user.is_admin;
+        await user.save();
+      }
+
+      if (error) {
+        return response.badRequest({
+          message: "Some users couldn't be updated",
+        });
+      }
+
+      return response.ok({
+        message: "Users updated",
+      });
+    } catch (error) {
+      return response.badRequest({ message: "Bad request" });
+    }
+  }
+
+  public async delete({ request, response }: HttpContextContract) {
+    const { id } = request.params();
+
+    try {
+      const user: User | null = await User.findBy("id", id);
+      if (!user || user.email === process.env?.ADMIN_EMAIL) {
+        return response.badRequest({ message: "Bad request" });
+      }
+
+      await user.delete();
+      return response.ok({ message: "User deleted" });
+    } catch (_) {
+      return response.notFound({ message: "User not found" });
+    }
+  }
+}

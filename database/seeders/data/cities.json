@@ -1,0 +1,79 @@
+[
+  {
+    "id": 0,
+    "name": "Anvers",
+    "latitude": 51.2194,
+    "longitude": 4.4025,
+    "zip": "2000"
+  },
+  {
+    "id": 1,
+    "name": "Limbourg",
+    "latitude": 50.9739,
+    "longitude": 5.3417,
+    "zip": "3500"
+  },
+  {
+    "id": 2,
+    "name": "Flandre-Orientale",
+    "latitude": 51.05,
+    "longitude": 3.7333,
+    "zip": "9000"
+  },
+  {
+    "id": 3,
+    "name": "Brabant Flamand",
+    "latitude": 50.8786,
+    "longitude": 4.6997,
+    "zip": "3000"
+  },
+  {
+    "id": 4,
+    "name": "Flandre-Occidentale",
+    "latitude": 51.2093,
+    "longitude": 3.2247,
+    "zip": "8000"
+  },
+  {
+    "id": 5,
+    "name": "Hainaut",
+    "latitude": 50.4108,
+    "longitude": 4.4446,
+    "zip": "7000"
+  },
+  {
+    "id": 6,
+    "name": "Liège",
+    "latitude": 50.6337,
+    "longitude": 5.5675,
+    "zip": "4000"
+  },
+  {
+    "id": 7,
+    "name": "Luxembourg",
+    "latitude": 50.0547,
+    "longitude": 5.4677,
+    "zip": "6700"
+  },
+  {
+    "id": 8,
+    "name": "Namur",
+    "latitude": 50.4674,
+    "longitude": 4.8717,
+    "zip": "5000"
+  },
+  {
+    "id": 9,
+    "name": "Brabant Wallon",
+    "latitude": 50.7019,
+    "longitude": 4.547,
+    "zip": "1300"
+  },
+  {
+    "id": 10,
+    "name": "Bruxelles",
+    "latitude": 50.8467,
+    "longitude": 4.3525,
+    "zip": "1000"
+  }
+]
