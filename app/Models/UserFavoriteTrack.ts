@@ -9,7 +9,7 @@ export default class UserFavoriteTrack extends BaseModel {
   public user_id: string;
 
   @column()
-  public track_id: number;
+  public track_id: string;
 
   @belongsTo(() => User, {
     foreignKey: "user_id",

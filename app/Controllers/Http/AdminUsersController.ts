@@ -27,42 +27,30 @@ export default class AdminController {
   }
 
   public async getPaginatedUsers({ request, response }: HttpContextContract) {
-    const { page, limit } = request.qs();
-
-    page || 1;
-    limit || 10;
-
-    const users: User[] = await User.query()
-      .preload("profile")
-      .paginate(page, limit);
-
-    return response.ok({
-      users,
-    });
-  }
-
-  public async searchUsers({ request, response }: HttpContextContract) {
-    const { query } = request.qs();
-    if(!query) {
-      return response.badRequest({ message: "Bad request"});
-    }
+    const page = request.input('page', 1);
+    const search = request.input('search', null);
+    const perPage = 10;
 
     try {
-      const users: User[] = await User.query()
-      .preload("profile")
-      .where("email", "LIKE", `%${query}%`)
-      .orWhereHas("profile", q => {
-        q.where("first_name", "LIKE", `%${query}%`)
-        .orWhere("last_name", "LIKE", `%${query}%`)
-      })
-      .limit(10);
+      let query = User.query().preload('profile');
 
-      return response.ok({
-        users,
-      })
-    }
-    catch(_) {
-      return response.badRequest({ message: "Bad request"});
+      if (search !== "undefined") {
+        query = query
+          .where('email', 'LIKE', `%${search}%`)
+          .orWhereHas('profile', (profileQuery) => {
+            profileQuery
+              .where('first_name', 'LIKE', `%${search}%`)
+              .orWhere('last_name', 'LIKE', `%${search}%`);
+          });
+      }
+
+      const paginatedResult = await query.paginate(page, perPage);
+      return response.ok(paginatedResult);
+    } catch (e) {
+      console.error('Error getting paginated users:', e);
+      return response.internalServerError({
+        message: "Une erreur est survenue",
+      });
     }
   }
 

@@ -68,8 +68,6 @@ export default class UserInterestsController {
   public async removeUserInterests({ request, response }: HttpContextContract) {
     const { interests } = request.body();
 
-    console.log(interests);
-
     if (!interests || !interests.length) {
       return response.badRequest({ message: "Bad request" });
     }

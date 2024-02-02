@@ -12,7 +12,9 @@ export default class extends BaseSchema {
       table.boolean("is_verified").notNullable().defaultTo(false);
       table.boolean("is_profile_complete").notNullable().defaultTo(false);
       table.boolean("is_banned").notNullable().defaultTo(false);
-      table.string("provider", 255).notNullable();
+      table.integer("daily_likes_count").notNullable().defaultTo(5);
+      table.integer("daily_swipes_count").notNullable().defaultTo(20);
+      table.timestamp("last_swipe_at", { useTz: true }).defaultTo(null);
       table.timestamp("created_at", { useTz: true });
     });
   }

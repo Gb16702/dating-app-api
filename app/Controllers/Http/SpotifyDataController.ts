@@ -7,6 +7,7 @@ type NormalizedData = {
   title: string;
   album: string;
   image: string;
+  preview: string;
 };
 
 export default class SpotifyDataController {
@@ -27,6 +28,7 @@ export default class SpotifyDataController {
         title: i.name,
         album: i.album.name,
         image: i.album.images[0].url,
+        preview: i.preview_url,
       };
     });
   }

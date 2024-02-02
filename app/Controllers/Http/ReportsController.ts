@@ -20,7 +20,7 @@ export default class ReportsController {
       report_reason,
       report_description,
     } = await request.validate(ReportValidator);
-    if (reported_user_id === user?.id) {
+    if (reported_user_id === user?.email) {
       return response.badRequest({ message: "You can't report yourself" });
     }
 
@@ -52,10 +52,24 @@ export default class ReportsController {
 
   public async cancel({ request, response }: HttpContextContract) {
     const { reporter_user_id, reported_user_id } = await request.body();
-    const report: UserReport | null = await this.checksIfIsAlreadyReportdBySameUser(reporter_user_id, reported_user_id);
-    if (!report) return response.badRequest({ message: "You didn't report this user" });
+    const report: UserReport | null =
+      await this.checksIfIsAlreadyReportdBySameUser(
+        reporter_user_id,
+        reported_user_id
+      );
+    if (!report)
+      return response.badRequest({ message: "You didn't report this user" });
 
     await report.delete();
+    return response.ok({ message: "Report deleted successfully" });
+  }
+
+  public async delete({ request, response }: HttpContextContract) {
+    const { id } = request.params();
+    const report: UserReport | null = await UserReport.findByOrFail("id", id);
+
+    await report.delete();
+    
     return response.ok({ message: "Report deleted successfully" });
   }
 

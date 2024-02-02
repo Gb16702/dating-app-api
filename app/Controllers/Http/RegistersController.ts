@@ -3,6 +3,7 @@ import RegisterValidator from "../../Validators/RegisterValidator";
 import User from "../../Models/User";
 import { AuthService } from "../../Services/AuthService";
 import type { AuthPayload } from "../../../types/AuthPayloadTypes";
+import Providers from "../../Models/Providers";
 
 export default class RegistersController {
   public async post({ request, response }: HttpContextContract): Promise<void> {
@@ -19,7 +20,7 @@ export default class RegistersController {
       if (isExistingUser)
         return response.unprocessableEntity({
           message: "This email address already exists",
-        });
+      });
 
       const userSchema: User = await User.create({
         email: validatedData.email,
@@ -27,8 +28,14 @@ export default class RegistersController {
         is_admin: validatedData.email === process.env?.ADMIN_EMAIL && true,
         is_verified: false,
         is_profile_complete: false,
+      });
+
+      const provider: Providers = await Providers.create({
+        user_id: userSchema.id,
         provider: "credentials",
       });
+
+      await provider.save();
 
       const authService = new AuthService();
       const token: string = await authService.authenticate(userSchema.id);

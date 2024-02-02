@@ -2,7 +2,7 @@ import type { HttpContextContract } from "@ioc:Adonis/Core/HttpContext";
 import Interest from "../../Models/Interest";
 
 export default class InterestsController {
-  public regex = /^[a-zA-Z]+$/;
+  public regex = /^[\wÀ-ü-\s]+$/;
   public async get({ request, response }: HttpContextContract) {
     const { id } = request.params();
 
@@ -16,10 +16,27 @@ export default class InterestsController {
     });
   }
 
-  public async all({ response }: HttpContextContract) {
-    return response.ok({
-      interests: await Interest.all(),
-    });
+  public async all({ request, response }: HttpContextContract) {
+    const page = request.input('page', 1);
+    const limit = request.input('limit', 10);
+    const searchQuery = request.input('search');
+
+    try {
+      const query = Interest.query();
+
+      if (searchQuery !== "undefined") {
+        query.whereRaw('LOWER(name) LIKE ?', [`%${searchQuery.toLowerCase()}%`]);
+      }
+
+      const interests = await query.paginate(page, limit);
+
+      return response.ok(interests);
+    } catch (e) {
+      console.error('Error getting paginated users:', e);
+      return response.internalServerError({
+        message: "Une erreur est survenue",
+      });
+    }
   }
 
   public async create({ request, response }: HttpContextContract) {

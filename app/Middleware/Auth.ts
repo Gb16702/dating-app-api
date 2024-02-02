@@ -23,7 +23,7 @@ export default class Auth {
     if (!user) {
       return ctx.response.unauthorized({
         error: "You must be logged in to access this route",
-      });
+        });
     }
 
     ctx["user"] = user;

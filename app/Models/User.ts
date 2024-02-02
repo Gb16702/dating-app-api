@@ -8,12 +8,15 @@ import {
   beforeSave,
   hasMany,
   HasMany,
+  afterCreate
 } from "@ioc:Adonis/Lucid/Orm";
 import UserProfile from "./UserProfile";
 import { randomUUID } from "crypto";
 import Hash from "@ioc:Adonis/Core/Hash";
 import Ban from "./Ban";
 import UserFavoriteTrack from "./UserFavoriteTrack";
+import EmailService from "../Services/EmailService";
+import Providers from "./Providers";
 
 export default class User extends BaseModel {
   @column({ isPrimary: true })
@@ -35,16 +38,22 @@ export default class User extends BaseModel {
   public is_verified: boolean;
 
   @column()
-  public is_profile_complete: boolean;
-
-  @column()
-  public provider: string;
+    public is_profile_complete: boolean;
 
   @column()
   public is_banned: boolean;
 
+  @column()
+  public dailyLikesCount: number;
+
+  @column()
+  public dailySwipesCount: number;
+
+  @column.dateTime()
+  public lastSwipeAt: DateTime;
+
   @hasOne(() => UserProfile)
-    public profile: HasOne<typeof UserProfile>;
+  public profile: HasOne<typeof UserProfile>;
 
   @hasMany(() => Ban, {
     foreignKey: "user_id",
@@ -64,12 +73,5 @@ export default class User extends BaseModel {
   @beforeCreate()
   public static generateUUID(user: User): void {
     user.id = randomUUID();
-  }
-
-  @beforeSave()
-  public static async hashPassword(user: User): Promise<void> {
-    if (user.$dirty.password) {
-      user.password = await Hash.make(user.password);
-    }
   }
 }

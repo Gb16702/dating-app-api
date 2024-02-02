@@ -1,13 +1,13 @@
 import BaseSchema from "@ioc:Adonis/Lucid/Schema";
 
-export default class extends BaseSchema {
-  protected tableName = "user_favorite_tracks";
+export default class Providers extends BaseSchema {
+  protected tableName = "providers";
 
   public async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.increments("id");
-      table.string("track_id", 255).notNullable();
-      table.uuid("user_id").references("id").inTable("users");
+      table.string("provider");
+      table.uuid("user_id").unsigned().references("id").inTable("users").onDelete("CASCADE");
     });
   }
 

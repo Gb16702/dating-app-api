@@ -2,12 +2,13 @@ import { AuthService } from "../../Services/AuthService";
 import type { HttpContextContract } from "@ioc:Adonis/Core/HttpContext";
 import AuthValidator from "../../Validators/AuthValidator";
 import User from "../../Models/User";
-import { isPasswordValid, hashPassword } from "../../../utils/passwordActions";
+import { isPasswordValid } from "../../../utils/passwordActions";
 import type { AuthPayload } from "../../../types/AuthPayloadTypes";
 import ForgotPasswordValidator from "../../Validators/ForgotPasswordValidator";
 import jwt from "jsonwebtoken";
 import Env from "@ioc:Adonis/Core/Env";
 import EmailService from "../../Services/EmailService";
+import Providers from "../../Models/Providers";
 
 export default class AuthController {
   public authService = new AuthService();
@@ -104,6 +105,7 @@ export default class AuthController {
       });
     }
 
+
     return response.ok({
       message: decodedToken,
     });
@@ -160,6 +162,8 @@ export default class AuthController {
   }
 
   public async verifySessionToken({ response, user }: HttpContextContract) {
+    console.log(user);
+    
     return response.ok({
       user
     })

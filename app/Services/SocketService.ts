@@ -6,12 +6,17 @@ class SocketService {
     private booted: boolean = false;
 
     public boot() {
-        if(this.booted) {
+        if (this.booted) {
             return;
         }
 
         this.booted = true;
-        this.io = new Server(AdonisServer.instance!)
+        this.io = new Server(AdonisServer.instance!, {
+            cors: {
+                origin: "*",
+                methods: ["GET", "POST"],
+            },
+        })
     }
 }
 

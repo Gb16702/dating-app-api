@@ -32,19 +32,22 @@ export default class SupportTicketController {
     }
 
     public async all({ request, response }: HttpContextContract) {
-        const { page, search } = request.qs();
+        const page = request.input('page', 1);
+        const search = request.input('search', null);
+        const perPage = 10;
 
         try {
             let query = SupportTicket.query().preload("user");
 
-            if (search) {
+            if (search !== "undefined") {
                 query = query.where((q) => {
                     q.where('subject', 'LIKE', `%${search}%`)
-                    .orWhere('description', 'LIKE', `%${search}%`);
+                        .orWhere('description', 'LIKE', `%${search}%`);
                 });
             }
 
-            return response.ok(search ? await query : await query.paginate(page || 1, 10));
+            const paginatedResult = await query.paginate(page, perPage);
+            return response.ok(paginatedResult);
         } catch (e) {
             return response.internalServerError({
                 message: "Une erreur est survenue",

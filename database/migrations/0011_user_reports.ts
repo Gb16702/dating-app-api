@@ -7,13 +7,13 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       table.increments("id");
       table
-        .uuid("reporter_user_id")
-        .references("id")
+        .string("reporter_user_id")
+        .references("email")
         .inTable("users")
         .notNullable();
       table
-        .uuid("reported_user_id")
-        .references("id")
+        .string("reported_user_id")
+        .references("email")
         .inTable("users")
         .notNullable();
       table.string("report_reason").notNullable();

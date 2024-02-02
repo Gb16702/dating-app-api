@@ -21,4 +21,12 @@ export default class EmailService {
         }
 
     }
+
+    public static async sendVerificationEmail(to: string, verificationToken: string) {
+        const dynamicTemplateData = {
+            verificationToken,
+        };
+
+        await this.sendEmail(to, Env.get('VERIFICATION_EMAIL_TEMPLATE_ID'), dynamicTemplateData);
+    }
 }

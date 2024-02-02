@@ -9,15 +9,22 @@ export default class UsersController {
       return response.badRequest({ message: "Invalid user" });
     }
 
-    const data: User = await User.query()
-      .preload("profile")
-      .preload("favorite_tracks")
-      .where("id", user?.id)
-      .firstOrFail();
+    const data: User | null = await User.query()
+      .select("id", "email", "is_admin", "is_verified", "is_banned", "is_profile_complete")
+      .preload("profile", (q) => {
+        q.select(
+          "gender_id",
+          "city_id",
+          "first_name",
+          "last_name",
+          "date_of_birth",
+          "bio",
+          "profile_picture",
+          "is_profile_displayed"
+        );
+      }).preload("favorite_tracks").where("id", user?.id).firstOrFail();
 
-    return response.ok({
-      data,
-    });
+    return response.ok({ data });
   }
 
   public async editPassword({ request, response, user }: HttpContextContract) {
