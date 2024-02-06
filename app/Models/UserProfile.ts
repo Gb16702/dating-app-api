@@ -34,6 +34,7 @@ export default class UserProfile extends BaseModel {
   @column()
   public userId: string;
 
+
   @belongsTo(() => Gender, {
     foreignKey: "genderId",
   })

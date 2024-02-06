@@ -1,14 +1,14 @@
 import BaseSchema from "@ioc:Adonis/Lucid/Schema";
 
 export default class Providers extends BaseSchema {
-  protected tableName = "swipes";
+  protected tableName = "tokens";
 
   public async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.increments("id");
-      table.uuid("swiper_user_id").unsigned().references("id").inTable("users").onDelete("CASCADE");
-      table.uuid("swiped_user_id").unsigned().references("id").inTable("users").onDelete("CASCADE");
-      table.timestamp("created_at", { useTz: true });
+      table.uuid("user_id").references("id").inTable("users").notNullable().onDelete("CASCADE");
+      table.uuid("token").notNullable();
+      table.timestamp("expires_at", { useTz: true });
     });
   }
 

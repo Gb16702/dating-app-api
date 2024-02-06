@@ -1,7 +1,7 @@
 import type { HttpContextContract } from "@ioc:Adonis/Core/HttpContext";
 import { SpotifyService } from "../../Services/SpotifyService";
 
-type NormalizedData = {
+export type NormalizedData = {
   id: string;
   artist: string;
   title: string;
@@ -16,9 +16,11 @@ export default class SpotifyDataController {
     this.spotifyService = new SpotifyService();
   }
 
-  public normalizeData({ tracks }: Record<string, string | any>): Array<NormalizedData> {
+  public normalizeData({
+    tracks,
+  }: Record<string, string | any>): Array<NormalizedData> {
     if (!tracks || !Array.isArray(tracks.items)) {
-        throw new Error("Invalid data structure");
+      throw new Error("Invalid data structure");
     }
 
     return tracks.items.map((i: Record<string, string | any>) => {
@@ -31,6 +33,17 @@ export default class SpotifyDataController {
         preview: i.preview_url,
       };
     });
+  }
+
+  public normalizeGetTrackData(trackData: any): NormalizedData {
+    return {
+      id: trackData.id,
+      title: trackData.name,
+      artist: trackData.artists[0].name,
+      album: trackData.album.name,
+      image: trackData.album.images[0].url,
+      preview: trackData.preview_url,
+    };
   }
 
   public async search({ request, response }: HttpContextContract) {
@@ -48,11 +61,43 @@ export default class SpotifyDataController {
       });
 
       return response.ok({
-        tracks: this.normalizeData((await res.json()) as Record<string, string | any>),
+        tracks: this.normalizeData(
+          (await res.json()) as Record<string, string | any>
+        ),
       });
-
     } catch (e) {
       return response.badRequest({ message: e });
     }
+  }
+
+  public async getTrack({ request, response }: HttpContextContract) {
+    const { array }: any = request.body();
+    if (!array) return response.badRequest({ message: "No tracks provided" });
+
+    const tracksData: Array<NormalizedData> = [];
+
+    for (const trackId of array) {
+      const url: string = `https://api.spotify.com/v1/tracks/${trackId}`;
+      const { access_token: token } =
+        await this.spotifyService.getAccessToken();
+
+      try {
+        const res: Response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          const trackData: any = await res.json();
+          tracksData.push(this.normalizeGetTrackData(trackData));
+        }
+      } catch (e) {
+        console.error(`Request failed for retrieving track data`);
+        return response.internalServerError({message: "Failed to fetch track data"});
+      }
+    }
+
+    return response.ok({ tracksData });
   }
 }

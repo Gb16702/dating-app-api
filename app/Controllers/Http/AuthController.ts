@@ -8,13 +8,13 @@ import ForgotPasswordValidator from "../../Validators/ForgotPasswordValidator";
 import jwt from "jsonwebtoken";
 import Env from "@ioc:Adonis/Core/Env";
 import EmailService from "../../Services/EmailService";
-import Providers from "../../Models/Providers";
+import { schema, rules } from "@ioc:Adonis/Core/Validator";
+import Token from "../../Models/Token";
 
 export default class AuthController {
   public authService = new AuthService();
   public async login({ request, response }: HttpContextContract) {
     const validatedData: AuthPayload = await request.validate(AuthValidator);
-    try {
       const user: User | null = await User.findBy("email", validatedData.email);
       if (!user) {
         return response.unprocessableEntity({
@@ -45,13 +45,7 @@ export default class AuthController {
         token,
         id: user.id,
       });
-    } catch (error) {
-      const message: string =
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : "Une erreur est survenue";
-      return response.forbidden({ message });
-    }
+
   }
 
   public async forgotPassword({ request, response }: HttpContextContract) {
@@ -105,13 +99,15 @@ export default class AuthController {
       });
     }
 
-
     return response.ok({
       message: decodedToken,
     });
   }
 
-  public async resetForgottenPassword({ request, response }: HttpContextContract) {
+  public async resetForgottenPassword({
+    request,
+    response,
+  }: HttpContextContract) {
     const { token, password } = request.body();
 
     if (!token) {
@@ -163,10 +159,28 @@ export default class AuthController {
 
   public async verifySessionToken({ response, user }: HttpContextContract) {
     console.log(user);
-    
+
     return response.ok({
-      user
-    })
+      user,
+    });
+  }
+
+  public async verifyAccount({ request }: HttpContextContract) {
+    const { token } = await request.validate({
+      schema: schema.create({
+        token: schema.string(),
+      }),
+    });
+
+    const tokenInstance = await Token.query()
+      .where("token", token)
+      .firstOrFail();
+
+    await User.query().where("id", tokenInstance.user_id).update({
+      is_verified: true,
+    });
+
+    await tokenInstance.delete();
   }
 
   public async logout({ request, response }: HttpContextContract) {

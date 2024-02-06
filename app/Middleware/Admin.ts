@@ -34,8 +34,6 @@ export default class Admin {
 
     ctx["user"] = user;
 
-    console.log(ctx["user"]);
-
     await next();
   }
 }

@@ -32,7 +32,7 @@ Route.group(() => {
       }).prefix("/edit");
       Route.get("/all", "AdminUsersController.getAll");
       Route.get("/paginate", "AdminUsersController.getPaginatedUsers");
-      Route.get("/search", "AdminUsersController.searchUsers")
+      Route.get("/search", "AdminUsersController.searchUsers");
       Route.get("/:id", "AdminUsersController.get");
       Route.group(() => {
         Route.get("/all", "ReportsController.all");
@@ -90,16 +90,23 @@ Route.group(() => {
         Route.post("/add", "UserInterestsController.addUserInterests");
         Route.delete("/delete", "UserInterestsController.removeUserInterests");
       }).prefix("/interests");
-    }).prefix("/profile").middleware("auth");
+    })
+      .prefix("/profile")
+      .middleware("auth");
 
     Route.group(() => {
       Route.post("/create", "MatchController.create").middleware("auth");
       Route.delete("/delete/:id", "MatchController.delete").middleware("auth");
-    }).prefix("/matches").middleware("auth");
+    })
+      .prefix("/matches")
+      .middleware("auth");
 
     Route.group(() => {
       Route.get("/all", "SpotifyDataController.search");
-    }).prefix("/spotify").middleware("auth");
+      Route.post("/getTrack", "SpotifyDataController.getTrack");
+    })
+      .prefix("/spotify")
+      .middleware("auth");
 
     Route.post("/messages", "MessagesController.create").middleware("auth");
 
@@ -117,14 +124,22 @@ Route.group(() => {
       Route.post("/create", "ReportsController.create");
       Route.delete("/cancel", "ReportsController.cancel");
       Route.delete("/delete/:id", "ReportsController.delete");
-    }).prefix("/reports").middleware("auth");
+    })
+      .prefix("/reports")
+      .middleware("auth");
 
     Route.group(() => {
       Route.get("/getUserTickets", "SupportTicketController.getUserTickets");
       Route.post("/create", "SupportTicketController.create");
       Route.delete("/cancel", "SupportTicketController.cancel");
-    }).prefix("/tickets").middleware("auth");
+    })
+      .prefix("/tickets")
+      .middleware("auth");
+
     Route.post("/swipe", "SwipeController.create").middleware("auth");
+    Route.post("/like", "MatchController.create").middleware("auth");
+    Route.post("/verify-account", "AuthController.verifyAccount");
+    Route.get("/meet-users", "UsersController.meetUsers").middleware("auth");
   }).prefix("/users");
 
   Route.group(() => {
@@ -134,5 +149,4 @@ Route.group(() => {
     Route.delete("/delete/:id", "InterestsController.delete");
     Route.patch("/update/:id", "InterestsController.update");
   }).prefix("/interests");
-
 }).prefix("/api");

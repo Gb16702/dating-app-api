@@ -40,4 +40,5 @@ export default Env.rules({
   CLOUDINARY_SECRET: Env.schema.string(),
   SENDGRID_API_KEY: Env.schema.string(),
   FRONTEND_URL: Env.schema.string(),
+  SERVER_URL: Env.schema.string(),
 });

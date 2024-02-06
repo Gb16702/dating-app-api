@@ -2,6 +2,18 @@ import type { HttpContextContract } from "@ioc:Adonis/Core/HttpContext";
 import User from "../../Models/User";
 import { isPasswordValid } from "../../../utils/passwordActions";
 import NewPasswordValidator from "../../Validators/NewPasswordValidator";
+import UserFavoriteTrack from "../../Models/UserFavoriteTrack";
+import Env from "@ioc:Adonis/Core/Env";
+import type { NormalizedData } from "./SpotifyDataController";
+import City from "../../Models/City";
+import UserMatch from "../../Models/UserMatch";
+
+type LatLng = {
+  currentUserLat: number;
+  currentUserLng: number;
+  userLat: number;
+  userLng: number;
+};
 
 export default class UsersController {
   public async me({ user, response }: HttpContextContract) {
@@ -10,7 +22,14 @@ export default class UsersController {
     }
 
     const data: User | null = await User.query()
-      .select("id", "email", "is_admin", "is_verified", "is_banned", "is_profile_complete")
+      .select(
+        "id",
+        "email",
+        "is_admin",
+        "is_verified",
+        "is_banned",
+        "is_profile_complete"
+      )
       .preload("profile", (q) => {
         q.select(
           "gender_id",
@@ -22,7 +41,10 @@ export default class UsersController {
           "profile_picture",
           "is_profile_displayed"
         );
-      }).preload("favorite_tracks").where("id", user?.id).firstOrFail();
+      })
+      .preload("favorite_tracks")
+      .where("id", user?.id)
+      .firstOrFail();
 
     return response.ok({ data });
   }
@@ -63,5 +85,170 @@ export default class UsersController {
     return response.ok({
       message: "Password updated",
     });
+  }
+
+  private transformDateOfBirthToAge(dateOfBirth: Date): number {
+    const date = new Date(dateOfBirth);
+    return Math.abs(
+      new Date(Date.now() - date.getTime()).getUTCFullYear() - 1970
+    );
+  }
+
+  private calculateDistance({
+    currentUserLat,
+    currentUserLng,
+    userLat,
+    userLng,
+  }: LatLng): number {
+    const Δλ = ((userLng - currentUserLng) * Math.PI) / 180,
+      distanceFactor =
+        Math.pow(((userLat - currentUserLat) * Math.PI) / 180 / 2, 2) +
+        Math.pow(Math.cos((userLat * Math.PI) / 180), 2) *
+          Math.pow(Math.sin(Δλ / 2), 2);
+
+    return Math.round(
+      (6371e3 *
+        (2 *
+          Math.atan2(
+            Math.sqrt(distanceFactor),
+            Math.sqrt(1 - distanceFactor)
+          ))) /
+        1000
+    );
+  }
+
+  public async meetUsers({ request, user, response }: HttpContextContract) {
+    const token: string | undefined = request
+      .header("Authorization")
+      ?.replace("Bearer ", "");
+    if (!user) return response.badRequest({ message: "Invalid user" });
+
+    if (user?.dailySwipesCount <= 0 ) {
+      return response.badRequest({ message: "Tu as atteint ta limite de swipes journalière" });
+    }
+
+    if(user?.dailyLikesCount <= 0) {
+      return response.badRequest({ message: "Tu as atteint ta limite de likes journalière"});
+    }
+
+    const page = request.input("page", 1);
+    const limit = Math.min(user.dailySwipesCount, 5);
+
+    const preferredGenderIds: number[] = (
+      await user.related("preferredGenders").query()
+    ).map((g) => g.gender_id);
+    const myGender = await user.related("profile").query().firstOrFail();
+
+    const { cityId } = await user.related("profile").query().firstOrFail();
+    const { latitude: currentUserLat, longitude: currentUserLng } =
+      await City.query()
+        .select("latitude", "longitude")
+        .where("id", cityId)
+        .firstOrFail();
+
+    const matchedUsers = await UserMatch.query().where({
+      matcher_user_id: user.id,
+    }).orWhere({
+      matched_user_id: user.id,
+    }).where("is_match", true).first();
+
+    const users: User[] | any = await User.query()
+      .where((q) => q.whereNot({ id: user.id }))
+      .where({
+        is_banned: false,
+        is_profile_complete: true,
+      })
+      .whereHas("preferredGenders", (q) => {
+        q.where("gender_id", myGender.genderId).orWhere("gender_id", 2);
+      })
+      .whereHas("profile", (q) => {
+        q.where({ is_profile_displayed: true });
+        if (!preferredGenderIds.includes(2))
+          q.whereIn("gender_id", preferredGenderIds);
+      })
+      .whereDoesntHave("bans", (q) => {
+        q.where({
+          banned_by: user.id,
+          is_active: true,
+        });
+      })
+      .whereNotIn(
+        "id",
+        (
+          await user.related("swiper").query()
+        ).map((swipe) => swipe.swiped_user_id)
+      )
+      .whereNotIn("id", (await UserMatch.query().where("matcher_user_id", user.id)).map((match) => match.matched_user_id))
+      .whereNotIn("id", matchedUsers ? [matchedUsers.matcher_user_id, matchedUsers.matched_user_id] : [])
+      .select("id", "is_verified")
+      .preload("profile", (q) =>
+        q.select(
+          "bio",
+          "profile_picture",
+          "first_name",
+          "date_of_birth",
+          "city_id"
+        )
+      )
+      .paginate(page, limit);
+
+    let enrichedUsers: Record<string, any>[] = [];
+
+    for (const user of users) {
+      const tracks: UserFavoriteTrack[] = await user
+        .related("favorite_tracks")
+        .query();
+      const array: string[] = tracks.map((t) => t.track_id);
+
+      const { latitude: userLat, longitude: userLng } = await City.query()
+        .select("latitude", "longitude")
+        .where("id", user.profile.cityId)
+        .firstOrFail();
+
+      const latLngObject: LatLng = {
+        currentUserLat: Number(currentUserLat),
+        currentUserLng: Number(currentUserLng),
+        userLat: Number(userLat),
+        userLng: Number(userLng),
+      };
+
+      let tracksData: any = [];
+      if (array.length) {
+        const fetchResponse = await fetch(
+          `${Env.get("SERVER_URL")}/api/users/spotify/getTrack`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ array }),
+          }
+        );
+
+        if (fetchResponse.ok) {
+          const { tracksData: tracks } = (await fetchResponse.json()) as {
+            tracksData: NormalizedData;
+          };
+          tracksData = tracks;
+        }
+      }
+
+      const enrichedUser = {
+        ...user.toJSON(),
+        ...user.profile.toJSON(),
+        age: this.transformDateOfBirthToAge(user.profile.date_of_birth),
+        distance: this.calculateDistance(latLngObject),
+        tracksData,
+      } as Record<string, any>;
+
+      delete enrichedUser.profile;
+      delete enrichedUser.date_of_birth;
+      delete enrichedUser.city_id;
+
+      enrichedUsers.push(enrichedUser);
+    }
+
+    return response.ok({ users: enrichedUsers, total: users.total });
   }
 }

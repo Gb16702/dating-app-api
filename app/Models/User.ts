@@ -5,18 +5,17 @@ import {
   HasOne,
   hasOne,
   beforeCreate,
-  beforeSave,
   hasMany,
   HasMany,
-  afterCreate
+  beforeSave,
 } from "@ioc:Adonis/Lucid/Orm";
 import UserProfile from "./UserProfile";
 import { randomUUID } from "crypto";
-import Hash from "@ioc:Adonis/Core/Hash";
 import Ban from "./Ban";
 import UserFavoriteTrack from "./UserFavoriteTrack";
-import EmailService from "../Services/EmailService";
-import Providers from "./Providers";
+import Hash from "@ioc:Adonis/Core/Hash";
+import UserPreferredGender from "./UserPreferredGender";
+import Swipe from "./Swipe";
 
 export default class User extends BaseModel {
   @column({ isPrimary: true })
@@ -38,7 +37,7 @@ export default class User extends BaseModel {
   public is_verified: boolean;
 
   @column()
-    public is_profile_complete: boolean;
+  public is_profile_complete: boolean;
 
   @column()
   public is_banned: boolean;
@@ -70,8 +69,30 @@ export default class User extends BaseModel {
   })
   public favorite_tracks: HasMany<typeof UserFavoriteTrack>;
 
+  @hasMany(() => UserPreferredGender, {
+    foreignKey: "user_id",
+  })
+  public preferredGenders: HasMany<typeof UserPreferredGender>;
+
+  @hasMany(() => Swipe, {
+    foreignKey: "swiper_user_id",
+  })
+  public swiper: HasMany<typeof Swipe>;
+
+  @hasMany(() => Swipe, {
+    foreignKey: "swiped_user_id",
+  })
+  public swiped: HasMany<typeof Swipe>;
+
   @beforeCreate()
   public static generateUUID(user: User): void {
     user.id = randomUUID();
+  }
+
+  @beforeSave()
+  public static async hashPassword(user: User): Promise<void> {
+    if (user.$dirty.password) {
+      user.password = await Hash.make(user.password);
+    }
   }
 }

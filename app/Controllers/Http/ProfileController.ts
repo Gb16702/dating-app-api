@@ -34,8 +34,6 @@ export default class ProfilesController {
 
       for (const file of fileList) {
         if (file) {
-          console.log(file.size > 5 * 1024 * 1024);
-
           if (file.size > 5 * 1024 * 1024) {
             return response.badRequest({
               message: `Le fichier ${file.clientName} est trop volumineux. La taille maximale autorisée est de 5MB.`,
@@ -129,25 +127,33 @@ export default class ProfilesController {
       profile_picture: main_picture,
     });
 
-    this.userProfile.related("user").query().update({ is_profile_complete: true });
+    this.userProfile
+      .related("user")
+      .query()
+      .update({ is_profile_complete: true });
 
-    await Promise.all([
-      this.userProfile.save(),
-      this.userPreferredGender.save(),
-      ...favoriteTracksPromises,
-      ...secondaryPicturesPromises,
-    ])
-      .then(() => {
-        authUser.is_profile_complete = true;
-        return authUser.save();
-      })
-      .then(() =>
-        response.ok({ message: "Ton profil a été configuré avec succès" })
-      )
-      .catch((e) => response.badRequest({ message: e }));
+    try {
+      await Promise.all([
+        this.userProfile.save(),
+        this.userPreferredGender.save(),
+        ...favoriteTracksPromises,
+        ...secondaryPicturesPromises,
+      ])
+        .then(() => {
+          authUser.is_profile_complete = true;
+          return authUser.save();
+        })
+        .then(() =>
+          response.ok({ message: "Ton profil a été configuré avec succès" })
+        )
+        .catch((e) => response.badRequest({ message: e }));
 
-    return response.ok({
-      req: request.allFiles(),
-    });
+      return response.ok({
+        req: request.allFiles(),
+      });
+    } catch (e) {
+      console.log(e);
+      return response.badRequest({ message: e });
+    }
   }
 }

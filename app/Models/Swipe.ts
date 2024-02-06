@@ -7,21 +7,21 @@ export default class Swipe extends BaseModel {
   public id: number;
 
   @column()
-  public swiperUserId: string;
+  public swiper_user_id: string;
 
   @column()
-  public swipedUserId: string;
+  public swiped_user_id: string;
 
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime;
 
   @belongsTo(() => User, {
-    foreignKey: "swiperUserId",
+    foreignKey: "swiper_user_id",
   })
   public swiper: BelongsTo<typeof User>;
 
   @belongsTo(() => User, {
-    foreignKey: "swipedUserId",
+    foreignKey: "swiped_user_id",
   })
   public swiped: BelongsTo<typeof User>;
 }
