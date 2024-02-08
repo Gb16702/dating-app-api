@@ -17,22 +17,28 @@ export default class InterestsController {
   }
 
   public async all({ request, response }: HttpContextContract) {
-    const page = request.input('page', 1);
-    const limit = request.input('limit', 10);
+    const page = request.input("page", 1);
+    const limit = request.input("limit", 10);
+    const getAll = request.input("getAll", false);
+
     const searchQuery = request.input('search');
 
     try {
       const query = Interest.query();
 
-      if (searchQuery !== "undefined") {
-        query.whereRaw('LOWER(name) LIKE ?', [`%${searchQuery.toLowerCase()}%`]);
+      if (searchQuery !== undefined) {
+        query.whereRaw("LOWER(name) LIKE ?", [
+          `%${searchQuery.toLowerCase()}%`,
+        ]);
       }
 
-      const interests = await query.paginate(page, limit);
+      const interests = getAll
+        ? await query.orderBy("name", "asc").exec()
+        : await query.paginate(page, limit);
 
       return response.ok(interests);
     } catch (e) {
-      console.error('Error getting paginated users:', e);
+      console.error("Error getting paginated users:", e);
       return response.internalServerError({
         message: "Une erreur est survenue",
       });

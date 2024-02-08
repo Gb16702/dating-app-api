@@ -45,7 +45,6 @@ export default class AuthController {
         token,
         id: user.id,
       });
-
   }
 
   public async forgotPassword({ request, response }: HttpContextContract) {

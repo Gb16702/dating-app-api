@@ -24,12 +24,7 @@ export default class ReportValidator {
    *    ```
    */
   public schema = schema.create({
-    reporter_user_id: schema.string({ trim: true }, [
-        rules.exists({ table: 'users', column: 'email' })
-    ]),
-    reported_user_id: schema.string({ trim: true }, [
-        rules.exists({ table: 'users', column: 'email' })
-    ]),
+    reported_user_id: schema.string({ trim: true }),
     report_reason: schema.string({ trim: true }, [
         rules.maxLength(60)
     ]),

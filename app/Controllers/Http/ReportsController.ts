@@ -14,33 +14,40 @@ export default class ReportsController {
   };
 
   public async create({ user, request, response }: HttpContextContract) {
-    const {
-      reporter_user_id,
-      reported_user_id,
-      report_reason,
-      report_description,
-    } = await request.validate(ReportValidator);
+    const { reported_user_id, report_reason, report_description } =
+      await request.validate(ReportValidator);
     if (reported_user_id === user?.email) {
-      return response.badRequest({ message: "You can't report yourself" });
+      return response.badRequest({
+        message: "Tu ne peux pas te signaler toi-même",
+      });
     }
 
     const report: UserReport | null =
       await this.checksIfIsAlreadyReportdBySameUser(
-        reporter_user_id,
+        user?.id as string,
         reported_user_id
       );
     if (report) {
-      return response.badRequest({ message: "You already reported this user" });
+      return response.badRequest({
+        message: "Tu as déjà signalé cet utilisateur",
+      });
     }
 
-    await UserReport.create({
-      reporter_user_id,
-      reported_user_id,
-      report_reason,
-      report_description,
-    });
 
-    return response.ok({ message: "Report created successfully" });
+    try {
+      await UserReport.create({
+        reporter_user_id: user?.id,
+        reported_user_id,
+        report_reason,
+        report_description,
+      });
+    } catch (error) {
+      return response.internalServerError({
+        message: error,
+      });
+    }
+
+    return response.ok({ message: "Utilisateur signalé avec succès !" });
   }
 
   public async all({ request, response }: HttpContextContract) {
@@ -58,10 +65,12 @@ export default class ReportsController {
         reported_user_id
       );
     if (!report)
-      return response.badRequest({ message: "You didn't report this user" });
+      return response.badRequest({
+        message: "Tu n'as pas signalé cet utilisateur",
+      });
 
     await report.delete();
-    return response.ok({ message: "Report deleted successfully" });
+    return response.ok({ message: "Signalement annulé avec succès" });
   }
 
   public async delete({ request, response }: HttpContextContract) {
@@ -69,8 +78,8 @@ export default class ReportsController {
     const report: UserReport | null = await UserReport.findByOrFail("id", id);
 
     await report.delete();
-    
-    return response.ok({ message: "Report deleted successfully" });
+
+    return response.ok({ message: "Signalement supprimé avec succès" });
   }
 
   public async get({ request, response }: HttpContextContract) {
