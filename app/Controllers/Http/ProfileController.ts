@@ -1,17 +1,27 @@
-import type { HttpContextContract } from "@ioc:Adonis/Core/HttpContext";
-import User from "../../Models/User";
-import Gender from "../../Models/Gender";
-import UserProfile from "../../Models/UserProfile";
-import UserPreferredGender from "../../Models/UserPreferredGender";
-import UserFavoriteTrack from "../../Models/UserFavoriteTrack";
-import City from "../../Models/City";
-import UploadImage from "../../Services/UploadImage";
-import UserSecondaryProfilePicture from "../../Models/UserSecondaryProfilePicture";
 import type { MultipartFileContract } from "@ioc:Adonis/Core/BodyParser";
+import type { HttpContextContract } from "@ioc:Adonis/Core/HttpContext";
+import City from "../../Models/City";
+import Gender from "../../Models/Gender";
+import User from "../../Models/User";
+import UserFavoriteTrack from "../../Models/UserFavoriteTrack";
+import UserPreferredGender from "../../Models/UserPreferredGender";
+import UserProfile from "../../Models/UserProfile";
+import UserSecondaryProfilePicture from "../../Models/UserSecondaryProfilePicture";
+import UploadImage from "../../Services/UploadImage";
 
 export default class ProfilesController {
   private userProfile = new UserProfile();
   private userPreferredGender = new UserPreferredGender();
+
+  private verifyFile(file: MultipartFileContract) {
+    if (file.size > 5 * 1024 * 1024) {
+      return `Le fichier ${file.clientName} est trop volumineux. La taille maximale autorisée est de 5MB.`;
+    }
+    const allowedExtensions = ["jpg", "png", "jpeg", "webp"];
+    if (!allowedExtensions.includes(file.extname as string)) {
+      return `L'extension du fichier ${file.clientName} n'est pas autorisée.`;
+    }
+  }
 
   public async setup({ request, response, user }: HttpContextContract) {
     const birth_date_fd = JSON.parse(request.input("birth_date"));
@@ -34,16 +44,9 @@ export default class ProfilesController {
 
       for (const file of fileList) {
         if (file) {
-          if (file.size > 5 * 1024 * 1024) {
-            return response.badRequest({
-              message: `Le fichier ${file.clientName} est trop volumineux. La taille maximale autorisée est de 5MB.`,
-            });
-          }
-          const allowedExtensions = ["jpg", "png", "jpeg", "webp"];
-          if (!allowedExtensions.includes(file.extname as string)) {
-            return response.badRequest(
-              `L'extension du fichier ${file.clientName} n'est pas autorisée.`
-            );
+          const error = this.verifyFile(file);
+          if (error) {
+            return response.badRequest({ message: error });
           }
         }
       }
@@ -90,16 +93,18 @@ export default class ProfilesController {
       return UploadImage.upload(tmpPath);
     });
 
-    const [main_picture, ...secondary_pictures] = await Promise.all(
+    const [main_picture, ...secondary_pictures] = (await Promise.all(
       uploadPromises
-    );
+    )) as any[];
 
     const secondaryPicturesPromises: Promise<UserSecondaryProfilePicture>[] =
-      secondary_pictures.map((picture_url) => {
+      secondary_pictures.map(({ picture_url, public_id }: any) => {
+        console.log(secondary_pictures);
         const userSecondaryProfilePicture = new UserSecondaryProfilePicture();
         userSecondaryProfilePicture.fill({
           user_id: authUser?.id,
           picture_url,
+          public_id,
         });
         return userSecondaryProfilePicture.save();
       });
@@ -124,7 +129,7 @@ export default class ProfilesController {
       date_of_birth: new Date(formatted_birth_date),
       bio: additional_informations_fd.bio,
       genderId: Number(gender_fd) - 1,
-      profile_picture: main_picture,
+      profile_picture: main_picture.picture_url,
     });
 
     this.userProfile
@@ -155,5 +160,58 @@ export default class ProfilesController {
       console.log(e);
       return response.badRequest({ message: e });
     }
+  }
+
+  public async edit({ request, response, user }: HttpContextContract) {
+    const files = request.allFiles();
+    const roles = request.input('role')
+
+    console.log(roles);
+
+
+    if (request.input("imagesToDelete")) {
+      const imagesToDelete = JSON.parse(request.input("imagesToDelete"));
+      for (const publicId of imagesToDelete) {
+        await UploadImage.delete(publicId);
+        await UserSecondaryProfilePicture.query()
+          .where("public_id", publicId)
+          .delete();
+      }
+    }
+
+    console.log(Object.entries(files));
+    for (const [index, file] of Object.entries(files)) {
+
+
+
+      // const role = roles[index];
+
+      // const error = this.verifyFile(file);
+      // if (error) {
+      //   return response.badRequest({ message: error });
+      // }
+
+      try {
+        const uploadResult = await UploadImage.upload(file.tmpPath);
+
+        // if (role === 'main') {
+        //   user.merge({ profile_picture: uploadResult.picture_url });
+        //   await user.save();
+        // } else {
+        //   await UserSecondaryProfilePicture.create({
+        //     user_id: user.id,
+        //     picture_url: uploadResult.picture_url,
+        //     public_id: uploadResult.public_id,
+        //   });
+        // }
+      } catch (e) {
+        console.error(e);
+        return response.internalServerError({ message: "Erreur lors de l'upload de l'image." });
+      }
+    }
+
+    return response.ok({
+      message: "Le profil a été mis à jour avec succès",
+    });
   }
 }

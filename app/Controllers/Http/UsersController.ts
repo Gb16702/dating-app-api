@@ -43,8 +43,13 @@ export default class UsersController {
         );
       })
       .preload("favorite_tracks")
+      .preload("user_secondary_profile_pictures", q => {
+        q.select("picture_url")
+        q.select("public_id")
+      })
       .where("id", user?.id)
       .firstOrFail();
+
 
     return response.ok({ data });
   }

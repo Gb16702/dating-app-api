@@ -16,6 +16,7 @@ import UserFavoriteTrack from "./UserFavoriteTrack";
 import Hash from "@ioc:Adonis/Core/Hash";
 import UserPreferredGender from "./UserPreferredGender";
 import Swipe from "./Swipe";
+import UserSecondaryProfilePicture from "./UserSecondaryProfilePicture";
 
 export default class User extends BaseModel {
   @column({ isPrimary: true })
@@ -73,6 +74,11 @@ export default class User extends BaseModel {
     foreignKey: "user_id",
   })
   public preferredGenders: HasMany<typeof UserPreferredGender>;
+
+  @hasMany(() => UserSecondaryProfilePicture, {
+    foreignKey: "user_id",
+  })
+  public user_secondary_profile_pictures: HasMany<typeof UserSecondaryProfilePicture>;
 
   @hasMany(() => Swipe, {
     foreignKey: "swiper_user_id",

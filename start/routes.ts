@@ -80,6 +80,7 @@ Route.group(() => {
   }).prefix("/authentication");
   Route.group(() => {
     Route.get("/me", "UsersController.me").middleware("auth");
+    Route.patch("/edit-profile", "ProfileController.edit").middleware("auth");
     Route.post("/edit-password", "UsersController.editPassword").middleware(
       "auth"
     );

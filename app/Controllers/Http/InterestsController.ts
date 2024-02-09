@@ -21,7 +21,7 @@ export default class InterestsController {
     const limit = request.input("limit", 10);
     const getAll = request.input("getAll", false);
 
-    const searchQuery = request.input('search');
+    const searchQuery = request.input("search");
 
     try {
       const query = Interest.query();

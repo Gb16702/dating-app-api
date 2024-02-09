@@ -8,6 +8,7 @@ export default class extends BaseSchema {
       table.increments("id");
       table.uuid("user_id").references("id").inTable("users").notNullable();
       table.string("picture_url").notNullable();
+      table.string("public_id").notNullable();
       table.timestamp("created_at", { useTz: true });
       table.timestamp("updated_at", { useTz: true });
     });

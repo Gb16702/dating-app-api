@@ -11,6 +11,9 @@ export default class UserSecondaryProfilePicture extends BaseModel {
   @column()
   public picture_url: string;
 
+  @column()
+  public public_id: string;
+
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime;
 

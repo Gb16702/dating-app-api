@@ -1,17 +1,8 @@
 import { UploadApiResponse, v2 as cloudinary } from "cloudinary";
 
 export default class UploadImage {
-  // private static allowedFormats: string[] = ["jpg", "png", "jpeg", "webp"];
-  // private static ImageConstraints(result: UploadApiResponse) {
-  //     const maxFileSize: number = 5 * 1024 * 1024;
-  //     if (result.bytes > maxFileSize) throw new Error("The file is too big");
-  // }
-  public static async upload(path: string) {
-    //   const fileExtension: string = file.split(".").pop();
-    //   if (!UploadImage.allowedFormats.includes(fileExtension)) {
-    //     throw new Error("Unauthorized file format");
-    //   }
 
+  public static async upload(path: string) {
     if (!path) {
       throw new Error("Le fichier n'a pas de chemin temporaire défini");
     }
@@ -20,8 +11,13 @@ export default class UploadImage {
       upload_preset: "dating",
     });
 
-    //   UploadImage.ImageConstraints(result);
+    return {
+      picture_url: result.secure_url,
+      public_id: result.public_id,
+    };
+  }
 
-    return result.secure_url as string;
+  public static async delete(public_id: string) {
+    await cloudinary.uploader.destroy(public_id);
   }
 }
