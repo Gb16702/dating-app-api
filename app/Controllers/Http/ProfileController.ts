@@ -8,6 +8,7 @@ import UserPreferredGender from "../../Models/UserPreferredGender";
 import UserProfile from "../../Models/UserProfile";
 import UserSecondaryProfilePicture from "../../Models/UserSecondaryProfilePicture";
 import UploadImage from "../../Services/UploadImage";
+import { StrictValues } from "@ioc:Adonis/Lucid/Database";
 
 export default class ProfilesController {
   private userProfile = new UserProfile();
@@ -87,7 +88,7 @@ export default class ProfilesController {
     if (invalidFiles.length)
       return response.badRequest({ message: errorMessages });
 
-    const uploadPromises: Promise<string>[] = fileList.map(({ tmpPath }) => {
+    const uploadPromises: Promise<any>[] = fileList.map(({ tmpPath }) => {
       if (!tmpPath)
         return Promise.reject("Le fichier n'a pas de chemin temporaire défini");
       return UploadImage.upload(tmpPath);
@@ -162,16 +163,17 @@ export default class ProfilesController {
     }
   }
 
-  public async edit({ request, response, user }: HttpContextContract) {
-    const files = request.allFiles();
-    const roles = request.input('role')
+  public async editPicture({ request, response, user }: HttpContextContract) {
+    const files = request.files("files");
+    const roles = request.input("roles");
+    const imageToDelete = request.input("imagesToDelete")
+      ? JSON.parse(request.input("imagesToDelete"))
+      : null;
 
-    console.log(roles);
+    if (imageToDelete) {
+      for (const publicId of imageToDelete) {
+        if (publicId === "") continue;
 
-
-    if (request.input("imagesToDelete")) {
-      const imagesToDelete = JSON.parse(request.input("imagesToDelete"));
-      for (const publicId of imagesToDelete) {
         await UploadImage.delete(publicId);
         await UserSecondaryProfilePicture.query()
           .where("public_id", publicId)
@@ -179,39 +181,57 @@ export default class ProfilesController {
       }
     }
 
-    console.log(Object.entries(files));
-    for (const [index, file] of Object.entries(files)) {
+    for (let index = 0; index < files.length; index++) {
+      const role = Array.isArray(roles) ? roles[index] : roles;
+      const file = files[index];
 
+      const error = this.verifyFile(file);
+      if (error) {
+        return response.badRequest({ message: error });
+      }
 
+      const uploadResult = await UploadImage.upload(file.tmpPath as string);
+      if (!uploadResult) {
+        return response.internalServerError({
+          message: "Failed to upload image",
+        });
+      }
 
-      // const role = roles[index];
-
-      // const error = this.verifyFile(file);
-      // if (error) {
-      //   return response.badRequest({ message: error });
-      // }
-
-      try {
-        const uploadResult = await UploadImage.upload(file.tmpPath);
-
-        // if (role === 'main') {
-        //   user.merge({ profile_picture: uploadResult.picture_url });
-        //   await user.save();
-        // } else {
-        //   await UserSecondaryProfilePicture.create({
-        //     user_id: user.id,
-        //     picture_url: uploadResult.picture_url,
-        //     public_id: uploadResult.public_id,
-        //   });
-        // }
-      } catch (e) {
-        console.error(e);
-        return response.internalServerError({ message: "Erreur lors de l'upload de l'image." });
+      if (role === "main") {
+        if (user) {
+          const userProfile = await UserProfile.findByOrFail(
+            "user_id",
+            user.id
+          );
+          userProfile.profile_picture = uploadResult.picture_url;
+          await userProfile.save();
+        }
+      } else if (role === "secondary") {
+        await UserSecondaryProfilePicture.create({
+          user_id: user?.id,
+          picture_url: uploadResult.picture_url,
+          public_id: uploadResult.public_id,
+        });
       }
     }
 
+    const main_picture = await UserProfile.query()
+      .where("user_id", user?.id as StrictValues)
+      .select("profile_picture")
+      .first();
+
+    const secondary_pictures = await UserSecondaryProfilePicture.query()
+      .where("user_id", user?.id  as StrictValues)
+      .select("picture_url")
+      .exec();
+
+    console.log(main_picture, secondary_pictures);
+
+
     return response.ok({
       message: "Le profil a été mis à jour avec succès",
+      profile_picture: main_picture?.profile_picture,
+      secondary_pictures: secondary_pictures.map((pic) => pic.picture_url),
     });
   }
 }
