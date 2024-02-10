@@ -94,7 +94,9 @@ export default class SpotifyDataController {
         }
       } catch (e) {
         console.error(`Request failed for retrieving track data`);
-        return response.internalServerError({message: "Failed to fetch track data"});
+        return response.internalServerError({
+          message: "Failed to fetch track data",
+        });
       }
     }
 

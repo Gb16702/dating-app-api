@@ -20,8 +20,6 @@
 
 import Route from "@ioc:Adonis/Core/Route";
 
-Route.get("/", "CookieTempController.get");
-
 Route.post("/", "WelcomeEmailController.sendWelcomeEmail");
 
 Route.group(() => {
@@ -80,7 +78,9 @@ Route.group(() => {
   }).prefix("/authentication");
   Route.group(() => {
     Route.get("/me", "UsersController.me").middleware("auth");
-    Route.patch("/edit-picture", "ProfileController.editPicture").middleware("auth");
+    Route.patch("/edit-picture", "ProfileController.editPicture").middleware(
+      "auth"
+    );
     Route.post("/edit-password", "UsersController.editPassword").middleware(
       "auth"
     );
@@ -138,6 +138,9 @@ Route.group(() => {
       .middleware("auth");
 
     Route.post("/swipe", "SwipeController.create").middleware("auth");
+    Route.get("/conversations", "ConversationController.getAll").middleware(
+      "auth"
+    );
     Route.post("/like", "MatchController.create").middleware("auth");
     Route.post("/verify-account", "AuthController.verifyAccount");
     Route.get("/meet-users", "UsersController.meetUsers").middleware("auth");
