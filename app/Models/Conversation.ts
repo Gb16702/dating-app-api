@@ -11,6 +11,7 @@ import {
 import { randomUUID } from "crypto";
 import Message from "./Message";
 import User from "./User";
+import UserFavoritesConversations from "./UserFavoritesConversations";
 
 export default class Conversation extends BaseModel {
   @column({ isPrimary: true })
@@ -29,6 +30,9 @@ export default class Conversation extends BaseModel {
 
   @hasMany(() => Message)
   public messages: HasMany<typeof Message>;
+
+  @hasMany(() => UserFavoritesConversations)
+  public userFavoritesConversations: HasMany<typeof UserFavoritesConversations>;
 
   @beforeCreate()
   public static async genereateUUID(conversation: Conversation) {

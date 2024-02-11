@@ -43,13 +43,12 @@ export default class UsersController {
         );
       })
       .preload("favorite_tracks")
-      .preload("user_secondary_profile_pictures", q => {
-        q.select("picture_url")
-        q.select("public_id")
+      .preload("user_secondary_profile_pictures", (q) => {
+        q.select("picture_url");
+        q.select("public_id");
       })
       .where("id", user?.id)
       .firstOrFail();
-
 
     return response.ok({ data });
   }
@@ -128,12 +127,16 @@ export default class UsersController {
       ?.replace("Bearer ", "");
     if (!user) return response.badRequest({ message: "Invalid user" });
 
-    if (user?.dailySwipesCount <= 0 ) {
-      return response.badRequest({ message: "Tu as atteint ta limite de swipes journalière" });
+    if (user?.dailySwipesCount <= 0) {
+      return response.badRequest({
+        message: "Tu as atteint ta limite de swipes journalière",
+      });
     }
 
-    if(user?.dailyLikesCount <= 0) {
-      return response.badRequest({ message: "Tu as atteint ta limite de likes journalière"});
+    if (user?.dailyLikesCount <= 0) {
+      return response.badRequest({
+        message: "Tu as atteint ta limite de likes journalière",
+      });
     }
 
     const page = request.input("page", 1);
@@ -151,11 +154,32 @@ export default class UsersController {
         .where("id", cityId)
         .firstOrFail();
 
-    const matchedUsers = await UserMatch.query().where({
-      matcher_user_id: user.id,
-    }).orWhere({
-      matched_user_id: user.id,
-    }).where("is_match", true).first();
+    const matchedUsers = await UserMatch.query()
+      .where({
+        matcher_user_id: user.id,
+      })
+      .orWhere({
+        matched_user_id: user.id,
+      })
+      .where("is_match", true)
+      .exec();
+
+    const matchedUsersSet = new Set<string>();
+    matchedUsers
+      .map((match) => {
+        return {
+          matched_user_id: match.matched_user_id,
+          matcher_user_id: match.matcher_user_id,
+        };
+      })
+      .forEach((match) => {
+        if (match.matched_user_id !== user.id)
+          matchedUsersSet.add(match.matched_user_id);
+        if (match.matcher_user_id !== user.id)
+          matchedUsersSet.add(match.matcher_user_id);
+      });
+
+    const matchArray = Array.from(matchedUsersSet);
 
     const users: User[] | any = await User.query()
       .where((q) => q.whereNot({ id: user.id }))
@@ -183,8 +207,13 @@ export default class UsersController {
           await user.related("swiper").query()
         ).map((swipe) => swipe.swiped_user_id)
       )
-      .whereNotIn("id", (await UserMatch.query().where("matcher_user_id", user.id)).map((match) => match.matched_user_id))
-      .whereNotIn("id", matchedUsers ? [matchedUsers.matcher_user_id, matchedUsers.matched_user_id] : [])
+      .whereNotIn(
+        "id",
+        (
+          await UserMatch.query().where("matcher_user_id", user.id)
+        ).map((match) => match.matched_user_id)
+      )
+      .whereNotIn("id", matchArray)
       .select("id", "is_verified")
       .preload("profile", (q) =>
         q.select(
