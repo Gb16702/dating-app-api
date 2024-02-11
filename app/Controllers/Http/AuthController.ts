@@ -8,43 +8,43 @@ import ForgotPasswordValidator from "../../Validators/ForgotPasswordValidator";
 import jwt from "jsonwebtoken";
 import Env from "@ioc:Adonis/Core/Env";
 import EmailService from "../../Services/EmailService";
-import { schema, rules } from "@ioc:Adonis/Core/Validator";
+import { schema } from "@ioc:Adonis/Core/Validator";
 import Token from "../../Models/Token";
 
 export default class AuthController {
   public authService = new AuthService();
   public async login({ request, response }: HttpContextContract) {
     const validatedData: AuthPayload = await request.validate(AuthValidator);
-      const user: User | null = await User.findBy("email", validatedData.email);
-      if (!user) {
-        return response.unprocessableEntity({
-          message: "Invalid credentials",
-        });
-      }
-
-      const isValid: boolean = await isPasswordValid({
-        hashedPassword: user.password,
-        plainTextPassword: validatedData.password,
+    const user: User | null = await User.findBy("email", validatedData.email);
+    if (!user) {
+      return response.unprocessableEntity({
+        message: "Invalid credentials",
       });
+    }
 
-      if (!isValid) {
-        return response.unprocessableEntity({
-          message: "Invalid credentials",
-        });
-      }
+    const isValid: boolean = await isPasswordValid({
+      hashedPassword: user.password,
+      plainTextPassword: validatedData.password,
+    });
 
-      const token: string = await this.authService.authenticate(user.id);
-      if (!token) {
-        return response.internalServerError({
-          message: "Unable to generate token",
-        });
-      }
-
-      return response.ok({
-        message: "Logged in",
-        token,
-        id: user.id,
+    if (!isValid) {
+      return response.unprocessableEntity({
+        message: "Invalid credentials",
       });
+    }
+
+    const token: string = await this.authService.authenticate(user.id);
+    if (!token) {
+      return response.internalServerError({
+        message: "Unable to generate token",
+      });
+    }
+
+    return response.ok({
+      message: "Logged in",
+      token,
+      id: user.id,
+    });
   }
 
   public async forgotPassword({ request, response }: HttpContextContract) {

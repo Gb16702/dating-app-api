@@ -153,10 +153,6 @@ export default class ProfilesController {
           response.ok({ message: "Ton profil a été configuré avec succès" })
         )
         .catch((e) => response.badRequest({ message: e }));
-
-      return response.ok({
-        req: request.allFiles(),
-      });
     } catch (e) {
       console.log(e);
       return response.badRequest({ message: e });

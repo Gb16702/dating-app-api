@@ -7,8 +7,7 @@ import Token from "../Models/Token";
 
 export default class DeleteInactiveAccount extends BaseTask {
   public static get schedule() {
-    //every day
-    return CronTimeV2.everyDay();
+    return CronTimeV2.every(24).hours();
   }
 
   public static get useLock() {
