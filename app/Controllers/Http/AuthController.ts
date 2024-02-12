@@ -157,7 +157,6 @@ export default class AuthController {
   }
 
   public async verifySessionToken({ response, user }: HttpContextContract) {
-    console.log(user);
 
     return response.ok({
       user,

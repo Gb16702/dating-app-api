@@ -2,6 +2,7 @@ import type { HttpContextContract } from "@ioc:Adonis/Core/HttpContext";
 import Message from "../../Models/Message";
 import Conversation from "../../Models/Conversation";
 import SocketService from "../../Services/SocketService";
+import Notification from "../../Models/Notification";
 
 export default class MessagesController {
   private getReceiverId = (
@@ -23,9 +24,7 @@ export default class MessagesController {
       return response.notFound({ message: "Conversation not found" });
 
     return response.ok(
-      await Message.query()
-        .where((q) => q.where({ conversation_id: id }))
-        .preload("sender")
+      await Message.query().where((q) => q.where({ conversation_id: id }))
     );
   }
 
@@ -46,18 +45,44 @@ export default class MessagesController {
       conversation_id: conversationId,
       sender_id: user?.id,
       receiver_id: this.getReceiverId(conversation, user?.id),
+      is_read: false,
       content,
     });
 
     SocketService.emitToUser(message.receiver_id, "new_message", message);
-    SocketService.emitToUser(message.receiver_id, "Notification", {
+
+    const notification = await Notification.create({
+      user_id: this.getReceiverId(conversation, user?.id),
       title: "Nouveau message",
-      body: message.content,
+      content: message.content,
     });
+
+    const notificationWithProfile = await Notification.query()
+      .where("id", notification.id)
+      .preload("user", (q) => {
+        q.preload("profile", (q) => {
+          q.select("profile_picture", "first_name", "last_name");
+        });
+      })
+      .first();
+
+    console.log(notificationWithProfile?.toJSON(), "Notification");
+
+
+    SocketService.emitToUser(message.receiver_id, "notification", {
+      id: notification.id,
+      title: notification.title,
+      content: message.content,
+      user_id: notification.user_id,
+      created_at: notification.createdAt,
+      is_read: notification.is_read,
+      user: notificationWithProfile?.user.toJSON(),
+    });
+
+    console.log(message.toJSON(), "Message");
 
     return response.created({
       message,
-      conversation,
     });
   }
 }

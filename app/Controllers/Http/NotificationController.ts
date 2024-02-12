@@ -2,22 +2,29 @@ import type { HttpContextContract } from "@ioc:Adonis/Core/HttpContext";
 import Notification from "../../Models/Notification";
 
 export default class NotificationController {
-  public async markAsRead({ params, response, user }: HttpContextContract) {
-    const { id } = params;
-    if (!id) return response.badRequest({ message: "Notification ID is required" });
+  public async markAllAsRead({ response, user }: HttpContextContract) {
+    if (!user) {
+      return response.unauthorized({ message: "Vous n'êtes pas autorisé" });
+    }
 
-    const notification: Notification | null = await Notification.findOrFail(id);
-    if (!notification) return response.notFound({ message: "Notification not found" });
-
-    if (notification.user_id !== user?.id) return response.forbidden({ message: "You are not allowed to mark this notification as read" });
-
-    notification.is_read = true;
-    await notification.save();
-
-    return response.ok({ message: "Notification marked as read" });
+    await Notification.query()
+      .where({ user_id: user?.id })
+      .update({ is_read: true });
+    return response.ok({ message: "Opération effectuée avec succès" });
   }
 
   public async getAll({ response, user }: HttpContextContract) {
-    return response.ok(await Notification.query().where({ user_id: user?.id }).orderBy("created_at", "desc"));
+    return response.ok(
+      await Notification.query()
+        .orderBy("created_at", "desc")
+        .where({ user_id: user?.id })
+        .andWhere("is_read", false)
+        .preload("user", (q) => {
+          q.preload("profile", (q) => {
+            q.select("profile_picture", "first_name", "last_name");
+          });
+        })
+        .limit(10)
+    );
   }
 }

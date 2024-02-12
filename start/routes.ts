@@ -116,6 +116,8 @@ Route.group(() => {
       "UserFavoritesConversationsController.pin"
     ).middleware("auth");
 
+    Route.get("/conversations/:id/other-user", "ConversationController.getOtherUser").middleware("auth");
+
     Route.get(
       "/conversations/:id/messages",
       "MessagesController.show"
@@ -145,6 +147,13 @@ Route.group(() => {
     Route.post("/verify-account", "AuthController.verifyAccount");
     Route.get("/meet-users", "UsersController.meetUsers").middleware("auth");
   }).prefix("/users");
+
+  Route.group(() => {
+    Route.get("/all", "NotificationController.getAll");
+    Route.post("/clear", "NotificationController.markAllAsRead");
+  })
+    .prefix("/notifications")
+    .middleware("auth");
 
   Route.group(() => {
     Route.get("/all", "InterestsController.all");

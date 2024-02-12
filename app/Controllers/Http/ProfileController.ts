@@ -100,7 +100,6 @@ export default class ProfilesController {
 
     const secondaryPicturesPromises: Promise<UserSecondaryProfilePicture>[] =
       secondary_pictures.map(({ picture_url, public_id }: any) => {
-        console.log(secondary_pictures);
         const userSecondaryProfilePicture = new UserSecondaryProfilePicture();
         userSecondaryProfilePicture.fill({
           user_id: authUser?.id,
@@ -154,7 +153,6 @@ export default class ProfilesController {
         )
         .catch((e) => response.badRequest({ message: e }));
     } catch (e) {
-      console.log(e);
       return response.badRequest({ message: e });
     }
   }
@@ -220,9 +218,6 @@ export default class ProfilesController {
       .where("user_id", user?.id  as StrictValues)
       .select("picture_url")
       .exec();
-
-    console.log(main_picture, secondary_pictures);
-
 
     return response.ok({
       message: "Le profil a été mis à jour avec succès",
