@@ -3,6 +3,7 @@ import Message from "../../Models/Message";
 import Conversation from "../../Models/Conversation";
 import SocketService from "../../Services/SocketService";
 import Notification from "../../Models/Notification";
+import UserFavoritesConversations from "App/Models/UserFavoritesConversations";
 
 export default class MessagesController {
   private getReceiverId = (
@@ -20,12 +21,19 @@ export default class MessagesController {
       return response.badRequest({ message: "Conversation ID is required" });
 
     const conversation: Conversation | null = await Conversation.find(id);
+
+    const isFavorite = await UserFavoritesConversations.query().where({
+      userId: conversation?.first_user_id,
+      conversationId: id,
+    }).first();
+
     if (!conversation)
       return response.notFound({ message: "Conversation not found" });
 
-    return response.ok(
-      await Message.query().where((q) => q.where({ conversation_id: id }))
-    );
+    return response.ok({
+      messages: await Message.query().where((q) => q.where({ conversation_id: id })),
+      isFavorite: !!isFavorite,
+    });
   }
 
   public async create({ request, response, user }: HttpContextContract) {

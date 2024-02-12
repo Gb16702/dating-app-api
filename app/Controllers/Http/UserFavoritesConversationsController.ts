@@ -25,7 +25,7 @@ export default class UserFavoritesConversationsController {
             conversationId: conversation.id,
         }).delete();
 
-        return response.ok({ message: "Conversation removed from favorites"})
+        return response.ok({ message: "Conversation désépinglée"})
     }
 
     await UserFavoritesConversations.create({
@@ -33,6 +33,6 @@ export default class UserFavoritesConversationsController {
       conversationId: conversation.id,
     });
 
-    return response.created({ message: "Conversation added to favorites" });
+    return response.created({ message: "Conversation épinglée" });
   }
 }

@@ -105,15 +105,17 @@ export default class ConversationController {
       .where("userId", otherUserId)
       .first();
 
-    const areUserMatching = await UserMatch.query()
-    .where({
-      
-    })
 
-
+    const areUsersMatching = await UserMatch.query()
+    .where("matcher_user_id", user.id)
+    .andWhere("matched_user_id", otherUserId)
+    .orWhere("matcher_user_id", otherUserId)
+    .andWhere("matched_user_id", user.id)
+    .first();
 
     return response.ok({
       profile,
+      areUsersMatching: !!areUsersMatching,
     });
   }
 }

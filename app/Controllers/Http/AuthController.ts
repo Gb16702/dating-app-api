@@ -18,7 +18,7 @@ export default class AuthController {
     const user: User | null = await User.findBy("email", validatedData.email);
     if (!user) {
       return response.unprocessableEntity({
-        message: "Invalid credentials",
+        message: "Adresse mail ou mot de passe invalide",
       });
     }
 
@@ -29,14 +29,14 @@ export default class AuthController {
 
     if (!isValid) {
       return response.unprocessableEntity({
-        message: "Invalid credentials",
+        message: "Adresse mail ou mot de passe invalide",
       });
     }
 
     const token: string = await this.authService.authenticate(user.id);
     if (!token) {
       return response.internalServerError({
-        message: "Unable to generate token",
+        message: "Impossible de générer la session",
       });
     }
 

@@ -21,12 +21,18 @@ export default class InterestsController {
     const limit = request.input("limit", 10);
     const getAll = request.input("getAll", false);
 
-    const searchQuery = request.input("search");
+    const searchQuery = String(request.input("search"));
+
+    console.log(typeof  searchQuery);
+
+    console.log("searchQuery", searchQuery);
+
+
 
     try {
       const query = Interest.query();
 
-      if (searchQuery !== undefined) {
+      if (searchQuery !== "undefined") {
         query.whereRaw("LOWER(name) LIKE ?", [
           `%${searchQuery.toLowerCase()}%`,
         ]);
