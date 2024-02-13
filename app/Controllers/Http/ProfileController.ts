@@ -38,6 +38,10 @@ export default class ProfilesController {
     const city_fd = JSON.parse(request.input("city"));
     const tracks_fd = JSON.parse(request.input("tracks"));
 
+    if (!birth_date_fd.year || !birth_date_fd.month || !birth_date_fd.day || isNaN(birth_date_fd.year) || isNaN(birth_date_fd.month) || isNaN(birth_date_fd.day)) {
+      return response.badRequest({ message: "La date de naissance fournie est invalide." });
+    }
+
     const files = request.allFiles();
     let fileList: MultipartFileContract[] = [];
     for (const fileArray of Object.values(files)) {
@@ -109,24 +113,34 @@ export default class ProfilesController {
         return userSecondaryProfilePicture.save();
       });
 
-    const birth_date = new Date(
-      birth_date_fd.year,
-      birth_date_fd.month - 1,
-      birth_date_fd.day
-    );
+    const year = parseInt(birth_date_fd.year, 10);
+    const month = parseInt(birth_date_fd.month, 10);
+    const day = parseInt(birth_date_fd.day, 10);
 
-    const formatted_birth_date = [
-      birth_date.getDate().toString().padStart(2, "0"),
-      (birth_date.getMonth() + 1).toString().padStart(2, "0"),
-      birth_date.getFullYear(),
-    ].join("-");
+    if (isNaN(year) || isNaN(month) || isNaN(day)) {
+      return response.badRequest({ message: "La date de naissance fournie est invalide." });
+    }
+
+    const formatted_birth_date = `${day.toString().padStart(2, '0')}-${month.toString().padStart(2, '0')}-${year}`;
+
+    // const birth_date = new Date(
+    //   birth_date_fd.year,
+    //   birth_date_fd.month - 1,
+    //   birth_date_fd.day
+    // );
+    //
+    // const formatted_birth_date = [
+    //   birth_date.getDate().toString().padStart(2, "0"),
+    //   (birth_date.getMonth() + 1).toString().padStart(2, "0"),
+    //   birth_date.getFullYear(),
+    // ].join("-");
 
     this.userProfile.fill({
       userId: authUser?.id,
       first_name: first_name_fd,
       last_name: last_name_fd,
       cityId: city.id,
-      date_of_birth: new Date(formatted_birth_date),
+      date_of_birth: formatted_birth_date,
       bio: additional_informations_fd.bio,
       genderId: Number(gender_fd) - 1,
       profile_picture: main_picture.picture_url,
