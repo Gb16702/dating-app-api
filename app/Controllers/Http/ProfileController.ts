@@ -24,12 +24,16 @@ export default class ProfilesController {
     }
   }
 
+  private formatDate(dateObj) {
+    const { day, month, year } = dateObj;
+    const formattedDay = day.toString().padStart(2, '0');
+    const formattedMonth = month.toString().padStart(2, '0');
+    const formattedYear = year.toString();
+    return `${formattedDay}-${formattedMonth}-${formattedYear}`;
+  }
   public async setup({ request, response, user }: HttpContextContract) {
     const birthDateInput = request.input("birth_date");
-    const birthDateObject = new Date(JSON.parse(birthDateInput));
-    const year = birthDateObject.getFullYear();
-    const month = (birthDateObject.getMonth() +  1).toString().padStart(2, '0'); // Les mois sont indexés à partir de  0 en JS
-    const day = birthDateObject.getDate().toString().padStart(2, '0');
+    const birthDateObject = JSON.parse(birthDateInput);
     const first_name_fd = JSON.parse(request.input("first_name"));
     const last_name_fd = JSON.parse(request.input("last_name"));
     const { gender: gender_fd } = JSON.parse(request.input("gender"));
@@ -42,7 +46,9 @@ export default class ProfilesController {
     const city_fd = JSON.parse(request.input("city"));
     const tracks_fd = JSON.parse(request.input("tracks"));
 
-    const formattedBirthDate = `${day}-${month}-${year}`;
+    const formattedBirthDate = this.formatDate(birthDateObject);
+
+    console.log(formattedBirthDate)
 
     const files = request.allFiles();
     let fileList: MultipartFileContract[] = [];
@@ -80,6 +86,8 @@ export default class ProfilesController {
     );
 
     let errorMessages: string[] = [];
+
+    console.log(formattedBirthDate);
 
     const invalidFiles: MultipartFileContract[] = fileList.filter(
       (file) => !file.isValid
@@ -120,7 +128,7 @@ export default class ProfilesController {
       first_name: first_name_fd,
       last_name: last_name_fd,
       cityId: city.id,
-      date_of_birth: formattedBirthDate, formatted_birth_date,
+      date_of_birth: formattedBirthDate,
       bio: additional_informations_fd.bio,
       genderId: Number(gender_fd) - 1,
       profile_picture: main_picture.picture_url,
