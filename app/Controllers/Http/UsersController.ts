@@ -294,7 +294,7 @@ export default class UsersController {
   }
 
   public async getUserMatches({ user, response }: HttpContextContract) {
-    if (!user) return response.badRequest({ message: "Invalid User"});
+    if (!user) return response.badRequest({ message: "Invalid User"})
 
     const getCurrentUserMatches = await UserMatch.query()
       .where({
