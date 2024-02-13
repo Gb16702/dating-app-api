@@ -81,13 +81,15 @@ export default class SpotifyDataController {
       const { access_token: token } =
         await this.spotifyService.getAccessToken();
 
+
       try {
         const res: Response = await fetch(url, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
+        console.log("dd")
+        console.log(res)
         if (res.ok) {
           const trackData: any = await res.json();
           tracksData.push(this.normalizeGetTrackData(trackData));

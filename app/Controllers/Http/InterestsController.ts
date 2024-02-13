@@ -23,12 +23,6 @@ export default class InterestsController {
 
     const searchQuery = String(request.input("search"));
 
-    console.log(typeof  searchQuery);
-
-    console.log("searchQuery", searchQuery);
-
-
-
     try {
       const query = Interest.query();
 

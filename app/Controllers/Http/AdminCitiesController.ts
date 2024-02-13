@@ -36,6 +36,29 @@ export default class AdminCitiesController {
     });
   }
 
+  public async getPaginatedCities({ request, response }: HttpContextContract) {
+      const page = request.input('page', 1);
+      const search = request.input('search', null);
+      const perPage = 10;
+
+      try {
+        let query = City.query();
+
+        if (search !== "undefined" && search.trim().length) {
+          query = query
+            .where('name', 'LIKE', `%${search}%`)
+            .orWhere('zip', 'LIKE', `%${search}%`);
+        }
+
+        const paginatedResult = await query.paginate(page, perPage);
+        return response.ok(paginatedResult);
+      } catch (error) {
+        return response.internalServerError({
+          message: "Une erreur est survenue",
+        });
+      }
+  }
+
   public async create({ request, response }: HttpContextContract) {
     const data: CityType = await request.validate(CityValidator);
     if (!data) {

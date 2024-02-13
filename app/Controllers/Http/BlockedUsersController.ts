@@ -1,5 +1,6 @@
 import { HttpContextContract } from "@ioc:Adonis/Core/HttpContext";
 import UserBlocked from "App/Models/UserBlocked";
+import UserMatch from "App/Models/UserMatch";
 
 export default class BlockedUsersController {
   public  async create({ request, response, user }: HttpContextContract ) {
@@ -14,10 +15,36 @@ export default class BlockedUsersController {
       return response.badRequest({ message: "ID de l'utilisateur manquant" });
     }
 
+    const isAlreadyBlocked = await UserBlocked.query()
+      .where({
+        blocker_id: user.id,
+        blocked_id: blockedUserId,
+      })
+      .first();
+
+    if(isAlreadyBlocked) {
+      return response.badRequest({ message: "L'utilisateur est déjà bloqué" });
+    }
+
     await UserBlocked.create({
-      bloker_id: user.id,
+      blocker_id: user.id,
       blocked_id: blockedUserId,
     })
+
+    const isExistingMatch = await UserMatch.query()
+      .where({
+        matcher_user_id: user.id,
+        matched_user_id: blockedUserId,
+      })
+      .orWhere({
+        matcher_user_id: blockedUserId,
+        matched_user_id: user.id,
+      })
+      .first();
+
+    if(isExistingMatch) {
+      await isExistingMatch.delete();
+    }
 
     return response.created({ message: "Utilisateur bloqué avec succès" });
   }
@@ -29,7 +56,7 @@ export default class BlockedUsersController {
     }
 
     const verifyIfUserIsBlocked = await UserBlocked.query().where({
-      bloker_id: user.id,
+      blocker_id: user.id,
       blocked_id: id,
     }).first();
 

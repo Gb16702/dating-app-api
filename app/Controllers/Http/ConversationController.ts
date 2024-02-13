@@ -4,6 +4,7 @@ import Message from "../../Models/Message";
 import UserProfile from "../../Models/UserProfile";
 import UserFavoritesConversations from "../../Models/UserFavoritesConversations";
 import UserMatch from "../../Models/UserMatch";
+import UserBlocked from "App/Models/UserBlocked";
 
 export default class ConversationController {
   public async getAll({ response, user }: HttpContextContract) {
@@ -113,9 +114,16 @@ export default class ConversationController {
     .andWhere("matched_user_id", user.id)
     .first();
 
+    const isUserBlocked = await UserBlocked.query()
+    .where("blocker_id", user.id)
+    .andWhere("blocked_id", otherUserId)
+      .first();
+
+
     return response.ok({
       profile,
       areUsersMatching: !!areUsersMatching,
+      isUserBlocked: !!isUserBlocked,
     });
   }
 }

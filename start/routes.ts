@@ -39,6 +39,7 @@ Route.group(() => {
     }).prefix("/users");
     Route.group(() => {
       Route.get("/all", "AdminCitiesController.all");
+      Route.get("/paginated", "AdminCitiesController.getPaginatedCities");
       Route.post("/create", "AdminCitiesController.create");
       Route.get("/:id", "AdminCitiesController.get");
       Route.patch("/edit/:id", "AdminCitiesController.edit");
@@ -146,6 +147,11 @@ Route.group(() => {
     Route.post("/like", "MatchController.create").middleware("auth");
     Route.post("/verify-account", "AuthController.verifyAccount");
     Route.get("/meet-users", "UsersController.meetUsers").middleware("auth");
+    Route.get("/get-matches", "UsersController.getUserMatches" ).middleware("auth");
+    Route.group(() => {
+      Route.post("/create", "BlockedUsersController.create");
+      Route.delete("/delete/:id", "BlockedUsersController.delete");
+    }).prefix("/blocked").middleware("auth");
   }).prefix("/users");
 
   Route.group(() => {

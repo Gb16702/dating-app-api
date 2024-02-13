@@ -3,6 +3,8 @@ import { schema, rules } from "@ioc:Adonis/Core/Validator";
 import User from "../../Models/User";
 import UserMatch from "../../Models/UserMatch";
 import Conversation from "../../Models/Conversation";
+import SocketService from "App/Services/SocketService";
+import Notification from "App/Models/Notification";
 
 export default class MatchController {
   private async validateUser(userId: string) {
@@ -58,6 +60,7 @@ export default class MatchController {
       });
     }
 
+
     const getMatchInfos = await UserMatch.query()
       .where({
         matcher_user_id: matcherId,
@@ -68,6 +71,7 @@ export default class MatchController {
         matched_user_id: matcherId,
       })
       .first();
+
 
     if (getMatchInfos) {
       if (getMatchInfos.is_match) {
@@ -82,15 +86,16 @@ export default class MatchController {
         });
       }
 
-      user.merge({
-        dailyLikesCount: user.dailyLikesCount - 1,
-      });
-
       await user.save();
 
       if (getMatchInfos.is_match === false) {
         getMatchInfos.is_match = true;
         await getMatchInfos.save();
+        user.merge({
+          dailyLikesCount: user.dailyLikesCount - 1,
+        });
+
+        await user.save();
         const isExistingConversation = await Conversation.query()
           .where({
             first_user_id: matcherId,
@@ -107,12 +112,46 @@ export default class MatchController {
             second_user_id: liked_id,
           });
         }
+
+        for(const id of [matcherId, liked_id])  {
+          const notification = await Notification.create({
+            title: "Nouveau match",
+            content: "Vous avez matché avec un autre utilisateur",
+            user_id: id,
+          });
+
+          const notificationWithProfile = await Notification.query()
+            .where("id", notification.id)
+            .where("user_id", notification.user_id)
+            .preload("user", (q) => {
+              q.preload("profile", (q) => {
+                q.select("profile_picture", "first_name", "last_name");
+              });
+            }).first();
+
+          SocketService.emitToUser(
+            id, "notification", {
+              id: notification.id,
+              title: notification.title,
+              content: notification.content,
+              user_id: notification.user_id,
+              created_at: notification.createdAt,
+              is_read: notification.is_read,
+              user: notificationWithProfile?.user.toJSON(),
+            })
+        }
       }
     } else {
       await UserMatch.create({
         matcher_user_id: matcherId,
         matched_user_id: liked_id,
       });
+
+      user.merge({
+        dailyLikesCount: user.dailyLikesCount - 1,
+      });
+
+      await user.save();
     }
 
     return response.ok({ message: "Status mis à jour" });

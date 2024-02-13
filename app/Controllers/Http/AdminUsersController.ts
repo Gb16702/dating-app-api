@@ -29,6 +29,7 @@ export default class AdminController {
   public async getPaginatedUsers({ request, response }: HttpContextContract) {
     const page = request.input('page', 1);
     const search = request.input('search', null);
+    const filter = request.input('filter', null);
     const perPage = 10;
 
     try {
@@ -44,6 +45,14 @@ export default class AdminController {
           });
       }
 
+      if (filter) {
+        if (filter === "admin") {
+          query = query.where('is_admin', true);
+        } else if (filter === "banned") {
+          query = query.where('is_banned', true);
+        }
+      }
+
       const paginatedResult = await query.paginate(page, perPage);
       return response.ok(paginatedResult);
     } catch (e) {
@@ -55,39 +64,26 @@ export default class AdminController {
   }
 
   public async editUsersRole({ request, response }: HttpContextContract) {
-    const { users } = request.body();
+    const { user } = request.body();
 
-    if (!users || !users.length) {
+    if (!user) {
       return response.badRequest({ message: "Bad request" });
     }
 
-    const ids: string[] = users.map((user: User) => user);
-
-    let error: boolean = false;
-
     try {
-      for (const id of ids) {
-        const user: User | null = await User.findBy("id", id);
-        if (!user || user.email === process.env?.ADMIN_EMAIL) {
-          error = true;
-          continue;
-        }
-
-        user.is_admin = !user.is_admin;
-        await user.save();
+      const userInstance: User | null = await User.findBy("id", user);
+      if (!userInstance || userInstance.email === process.env?.ADMIN_EMAIL) {
+        return response.badRequest({ message: "User not found or cannot be edited" });
       }
 
-      if (error) {
-        return response.badRequest({
-          message: "Some users couldn't be updated",
-        });
-      }
+      userInstance.is_admin = !userInstance.is_admin;
+      await userInstance.save();
 
       return response.ok({
-        message: "Users updated",
+        message: "User role updated",
       });
     } catch (error) {
-      return response.badRequest({ message: "Bad request" });
+      return response.badRequest({ message: "An error occurred while updating the user role" });
     }
   }
 

@@ -140,7 +140,7 @@ export default class UsersController {
     }
 
     const page = request.input("page", 1);
-    const limit = Math.min(user.dailySwipesCount, 5);
+    const limit = Math.min(user.dailySwipesCount, 10);
 
     const preferredGenderIds: number[] = (
       await user.related("preferredGenders").query()
@@ -232,7 +232,9 @@ export default class UsersController {
       const tracks: UserFavoriteTrack[] = await user
         .related("favorite_tracks")
         .query();
+
       const array: string[] = tracks.map((t) => t.track_id);
+      console.log(array)
 
       const { latitude: userLat, longitude: userLng } = await City.query()
         .select("latitude", "longitude")
@@ -247,6 +249,7 @@ export default class UsersController {
       };
 
       let tracksData: any = [];
+      console.log(tracksData, array.length)
       if (array.length) {
         const fetchResponse = await fetch(
           `${Env.get("SERVER_URL")}/api/users/spotify/getTrack`,
@@ -260,7 +263,11 @@ export default class UsersController {
           }
         );
 
+
+        console.log("OKOKOK")
+
         if (fetchResponse.ok) {
+          console.log("OK")
           const { tracksData: tracks } = (await fetchResponse.json()) as {
             tracksData: NormalizedData;
           };
@@ -284,5 +291,44 @@ export default class UsersController {
     }
 
     return response.ok({ users: enrichedUsers, total: users.total });
+  }
+
+  public async getUserMatches({ user, response }: HttpContextContract) {
+    if (!user) return response.badRequest({ message: "Invalid User"});
+
+    const getCurrentUserMatches = await UserMatch.query()
+      .where({
+        matcher_user_id: user.id,
+        is_match: true,
+      })
+      .orWhere({
+        matched_user_id: user.id,
+        is_match: true,
+      }).orderBy("created_at", "desc")
+      .limit(10).exec();
+
+    let matches: any[] = [];
+    for (const match of getCurrentUserMatches) {
+      const otherUser = await User.query()
+        .where({
+          id: match.matched_user_id === user.id ? match.matcher_user_id : match.matched_user_id
+        }).preload("profile", q => {
+          q.select("first_name", "last_name", "profile_picture");
+        }).first();
+
+      matches.push(otherUser);
+    }
+
+    return response.ok({ matches });
+  }
+
+  public async deleteAccount({ user, response }: HttpContextContract) {
+    if (!user) {
+      return response.badRequest({ message: "Invalid user" });
+    }
+
+    await user.delete();
+
+    return response.ok({ message: "Account deleted" });
   }
 }

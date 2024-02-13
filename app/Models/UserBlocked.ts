@@ -7,7 +7,7 @@ export default class UserBlocked extends BaseModel {
   public id: number;
 
   @column()
-  public bloker_id: string;
+  public blocker_id: string;
 
   @column()
   public blocked_id: string;
@@ -15,7 +15,7 @@ export default class UserBlocked extends BaseModel {
   @belongsTo(() => User, {
     foreignKey: "bloker_id",
   })
-  public bloker: BelongsTo<typeof User>;
+  public blocker: BelongsTo<typeof User>;
 
   @belongsTo(() => User, {
     foreignKey: "blocked_id",

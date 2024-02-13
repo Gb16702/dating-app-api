@@ -74,9 +74,6 @@ export default class MessagesController {
       })
       .first();
 
-    console.log(notificationWithProfile?.toJSON(), "Notification");
-
-
     SocketService.emitToUser(message.receiver_id, "notification", {
       id: notification.id,
       title: notification.title,
@@ -86,8 +83,6 @@ export default class MessagesController {
       is_read: notification.is_read,
       user: notificationWithProfile?.user.toJSON(),
     });
-
-    console.log(message.toJSON(), "Message");
 
     return response.created({
       message,
