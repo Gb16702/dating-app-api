@@ -331,4 +331,26 @@ export default class UsersController {
 
     return response.ok({ message: "Account deleted" });
   }
+
+  public async getMatchesProfile({ params, response }: HttpContextContract) {
+    const userId = params.id;
+
+    if (!userId) {
+      return response.badRequest({ message: "User ID is required" });
+    }
+
+    try {
+      const user = await User.query()
+        .preload("favorite_tracks")
+        .preload("user_secondary_profile_pictures")
+        .preload("profile")
+        .first();
+
+        console.log(user);
+
+      return response.ok({ profile: user.profile });
+    } catch (error) {
+      return response.notFound({ message: "User not found" });
+    }
+  }
 }

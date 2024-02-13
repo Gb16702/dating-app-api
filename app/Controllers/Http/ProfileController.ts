@@ -25,7 +25,11 @@ export default class ProfilesController {
   }
 
   public async setup({ request, response, user }: HttpContextContract) {
-    const birth_date_fd = JSON.parse(request.input("birth_date"));
+    const birthDateInput = request.input("birth_date");
+    const birthDateObject = new Date(JSON.parse(birthDateInput));
+    const year = birthDateObject.getFullYear();
+    const month = (birthDateObject.getMonth() +  1).toString().padStart(2, '0'); // Les mois sont indexés à partir de  0 en JS
+    const day = birthDateObject.getDate().toString().padStart(2, '0');
     const first_name_fd = JSON.parse(request.input("first_name"));
     const last_name_fd = JSON.parse(request.input("last_name"));
     const { gender: gender_fd } = JSON.parse(request.input("gender"));
@@ -38,9 +42,7 @@ export default class ProfilesController {
     const city_fd = JSON.parse(request.input("city"));
     const tracks_fd = JSON.parse(request.input("tracks"));
 
-    if (!birth_date_fd.year || !birth_date_fd.month || !birth_date_fd.day || isNaN(birth_date_fd.year) || isNaN(birth_date_fd.month) || isNaN(birth_date_fd.day)) {
-      return response.badRequest({ message: "La date de naissance fournie est invalide." });
-    }
+    const formattedBirthDate = `${day}-${month}-${year}`;
 
     const files = request.allFiles();
     let fileList: MultipartFileContract[] = [];
@@ -113,34 +115,12 @@ export default class ProfilesController {
         return userSecondaryProfilePicture.save();
       });
 
-    const year = parseInt(birth_date_fd.year, 10);
-    const month = parseInt(birth_date_fd.month, 10);
-    const day = parseInt(birth_date_fd.day, 10);
-
-    if (isNaN(year) || isNaN(month) || isNaN(day)) {
-      return response.badRequest({ message: "La date de naissance fournie est invalide." });
-    }
-
-    const formatted_birth_date = `${day.toString().padStart(2, '0')}-${month.toString().padStart(2, '0')}-${year}`;
-
-    // const birth_date = new Date(
-    //   birth_date_fd.year,
-    //   birth_date_fd.month - 1,
-    //   birth_date_fd.day
-    // );
-    //
-    // const formatted_birth_date = [
-    //   birth_date.getDate().toString().padStart(2, "0"),
-    //   (birth_date.getMonth() + 1).toString().padStart(2, "0"),
-    //   birth_date.getFullYear(),
-    // ].join("-");
-
     this.userProfile.fill({
       userId: authUser?.id,
       first_name: first_name_fd,
       last_name: last_name_fd,
       cityId: city.id,
-      date_of_birth: formatted_birth_date,
+      date_of_birth: formattedBirthDate, formatted_birth_date,
       bio: additional_informations_fd.bio,
       genderId: Number(gender_fd) - 1,
       profile_picture: main_picture.picture_url,
